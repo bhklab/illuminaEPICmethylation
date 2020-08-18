@@ -1,4 +1,6 @@
 packrat/*
+.RProfile
+.snakemake
 
 !packrat/packrat.lock
 !packrat/packrat.opts
