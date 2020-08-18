@@ -1,0 +1,4 @@
+packrat/*
+
+!packrat/packrat.lock
+!packrat/packrat.opts
