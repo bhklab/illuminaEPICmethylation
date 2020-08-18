@@ -1,0 +1,11 @@
+plate_data_dirs:
+    - 'Plate1'
+    - 'Plate2'
+    - 'Plate3'
+
+plate_labels:
+    - 'labels/plate1_labels.csv'
+    - 'labels/plate2_labels.csv'
+    - 'labels/plate3_labels.csv'
+
+nthread: 14

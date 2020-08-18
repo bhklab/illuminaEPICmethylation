@@ -455,6 +455,11 @@ Source: CRAN
 Version: 0.0.2
 Hash: 4aaf002dd434e8c854611c5d11a1d58e
 
+Package: getopt
+Source: CRAN
+Version: 1.20.3
+Hash: ab38d3f237d72215f5850c142293303c
+
 Package: gh
 Source: CRAN
 Version: 1.1.0
@@ -576,6 +581,21 @@ Source: CRAN
 Version: 0.56.0
 Hash: 350c7c45268109cda91a1a34b38cd3a6
 
+Package: maxprobes
+Source: github
+Version: 0.0.2
+Hash: 242d4eb92cf248ee3e2c9569a397f45c
+Requires: minfi, minfiData
+GithubRepo: maxprobes
+GithubUsername: markgene
+GithubRef: HEAD
+GithubSha1: c2120dba972e12115280ef274ff80550cee5b264
+RemoteHost: api.github.com
+RemoteRepo: maxprobes
+RemoteUsername: markgene
+RemoteRef: HEAD
+RemoteSha: c2120dba972e12115280ef274ff80550cee5b264
+
 Package: mclust
 Source: CRAN
 Version: 5.4.6
@@ -626,6 +646,12 @@ Source: CRAN
 Version: 1.4.2
 Hash: 4a0f5345a4c0dc1ee684fea405f879e8
 Requires: askpass
+
+Package: optparse
+Source: CRAN
+Version: 1.6.6
+Hash: 730b4998cda7b49c60f1eb02945049d1
+Requires: getopt
 
 Package: packrat
 Source: CRAN

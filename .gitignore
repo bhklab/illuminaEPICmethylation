@@ -1,6 +1,10 @@
 packrat/*
-.RProfile
+.Rprofile
 .snakemake
+metadata
+rawdata
+procdata
+results
 
 !packrat/packrat.lock
-!packrat/packrat.opts
+packrat/lib*/
