@@ -1,5 +1,6 @@
 library(minfi)
 library(optparse)
+library(BiocParallel)
 library(qs)
 
 
@@ -27,20 +28,16 @@ opt <- parse_args(OptionParser(option_list=option_list))
 message("Reading in plate data...\n")
 
 
-plateDirs <- strsplit(opt$plates, ' ')
+plateDirs <- unlist(strsplit(opt$plates, ' '))
 arrays <- lapply(plateDirs, FUN=read.metharray.sheet)
 
 
 # ---- 2. Label array data
 message("Reading in plate labels...\n")
 
-labelPaths <- strsplit(opt$labels, ' ')
 
-print(labelPaths)
-print(getwd())
-
-label1 <- read.csv(labelPaths[[1]])
-print(label1)
+## FIXME:: Why is this making a list of lists?
+labelPaths <- unlist(strsplit(opt$labels, ' '))
 
 labels <- lapply(labelPaths, read.csv)
 
@@ -59,7 +56,7 @@ labelledArrays <- mapply(FUN=.labelArray,  # Function to apply
 # ---- 3. Read data into RGChannelSet objects
 message("Building RGChannelSets from array data...\n")
 
-rgSets <- lapply(labelledArrays, FUN=read.metharray.exp)
+rgSets <- bplapply(labelledArrays, function(targets) read.metharray.exp(targets=targets))
 
 
 # --- 4. Annotate the RGChannelSet objects
@@ -95,7 +92,7 @@ message("Merging RGSets into one object...\n")
 
 .combineArrays <- function(x1, x2) combineArrays(x1, x2, outType='IlluminaHumanMethylationEPIC')
 
-finalRGSet <- Reduce(FUN=.combineArrays, finalRGSets)
+finalRGSet <- Reduce(f=.combineArrays, finalRGSets)
 
 # ---- 6. Save the RGSet to disk
 message("Saving merged RGSet to disk...\n")
