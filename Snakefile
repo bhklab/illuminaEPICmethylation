@@ -27,6 +27,7 @@
 
 import re
 
+## TODO: Implement conda environment configuration from environment.yml
 ## TODO: Implement check to see if packrat dependencies are available and install if not
 
 
@@ -98,10 +99,11 @@ rule generate_microarray_qc_report:
 
 rule preprocess_rgset_to_methylset:
     input:
-
+        rgset=expand('procdata/1_{analysis_name}_RGSet_raw.qs', analysis_name=analysis_name)
     output:
-
+        qc_figures=expand('qc/methylSet/3_{analysis_name}_methylset_preproc_qc_plots.pdf', analysis_name=analysis_name),
+        methylset=expand('procdata/3_{analysis_name}_methylset.qs', analysis_name=analysis_name)
     shell:
         """
-        Rscript scripts/preprocessRGSetToMethylSet.R 
+        Rscript scripts/preprocessRGSetToMethylSet.R -i {input.rgset} -f {output.qc_figures} -o {output.methylset}
         """
