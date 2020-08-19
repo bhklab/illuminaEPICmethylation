@@ -52,7 +52,33 @@ rule build_rgset_from_plate_data:
         Rscript scripts/buildRGsetFromPlateData.R -p '{input.plates}' -l '{input.labels}' -o '{output}' -n {nthread}
         """
 
+
 # ---- 2. Generate microarray QC report
+
+## JP: Interpretation of this qcReport file:
+## The densityPlot function produces density plots of the methylation Beta values for all
+## samples, typically colored by sample group. While the density plots in Figure 1 are useful
+## for identifying deviant samples, it is not easy to identify the specific problem sample. If
+## there is a concern about outlier samples, a useful follow-up is the “bean” plot (Figure 2)
+## that shows each sample in its own section. While the shape of the distribution for “good”
+## samples will differ from experiment to experiment, many conditions have methylation profiles
+## characterized by two modes - one with close to 0% methylation, and a second at close to
+## 100% methylation.
+
+## Another QC plot recommended by the authors of minfi package
+## minfi provides a simple quality control plot that uses the log median intensity in both the
+## methylated (M) and unmethylated (U) channels. When plotting these two medians against
+## each other, it has been observed that good samples cluster together, while failed samples
+## tend to separate and have lower median intensities [1]. In general, we advice users to make
+## the plot and make a judgement. The line separating ”bad” from ”good” samples represent a
+## useful cutoff, which may have to be adapted to a specific dataset. 
+
+## We need to apply preprocessRaw() first to the dataset:
+## In order to obtain the methylated and unmethylated signals, we need to convert the RGChannelSet to an object containing 
+## the methylated and unmethylated signals using the function preprocessRaw. 
+## It takes as input a RGChannelSet and converts the red and green intensities to methylated and unmethylated signals 
+## according to the special 450K probe design, and returns the converted signals in a new object of class MethylSet. 
+## It does not perform any normalization.
 
 rule generate_microarray_qc_report:
     input:
@@ -64,9 +90,18 @@ rule generate_microarray_qc_report:
         qc_report=expand('qc/2_{analysis_name}_minfi_qc_report.pdf', analysis_name=analysis_name)
     shell:
         """
-        Rscript scripts/generateMicroarrayQCReport.R -i {input.rgset} \\
-            -d {output.detection_pvals} -p {output.probe_qc} \\ 
-            -s {output.sample_qc} -r {output.qc_report}
+        Rscript scripts/generateMicroarrayQCReport.R -i {input.rgset} -d {output.detection_pvals} -p {output.probe_qc} -s {output.sample_qc} -r {output.qc_report}
         """
 
-# ---- 3. 
+
+# ---- 3. Preprocess microarray intensities to methylation values
+
+rule preprocess_rgset_to_methylset:
+    input:
+
+    output:
+
+    shell:
+        """
+        Rscript scripts/preprocessRGSetToMethylSet.R 
+        """
