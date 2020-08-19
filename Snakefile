@@ -39,6 +39,10 @@ plate_labels = config['plate_labels']
 nthread = config['nthread']
 analysis_name = config['analysis_name']
 
+failed_qc1=config['failed_qc1']
+failed_qc2=config['failed_qc2']
+failed_qc3=config['failed_qc3']
+
 
 # ---- 1. Build minfi RGSet from raw plate data and labels
 
@@ -108,4 +112,75 @@ rule preprocess_rgset_to_methylset:
         Rscript scripts/preprocessRGSetToMethylSet.R -i {input.rgset} -f {output.qc_figures} -o {output.methylset}
         """
 
-# ---- 4. First round of QC:
+
+## FIXME: How can I reuse a rule with different outputs?
+## TODO: Determine if we can automate any manual QC steps
+
+# ---- 4. Pre-normalization manual QC1
+
+rule remove_failed_qc1_and_generate_report:
+    input:
+        rgset=expand('procdata/1_{analysis_name}_RGSet_raw.qs', analysis_name=analysis_name),
+        failed_qc=failed_qc1
+    output:
+        rgset_qc=expand('procdata/4_{analysis_name}_RGSet_qc1.qs', analysis_name=analysis_name),
+        detection_pvals=expand('qc/prenormalization/4_{analysis_name}_qc1_detection_pvals.csv', analysis_name=analysis_name),
+        probe_qc=expand('qc/prenormalization/4_{analysis_name}__qc1_probes_failed_per_sample_p0.01.csv', analysis_name=analysis_name),
+        sample_qc=expand('qc/prenormalization/4_{analysis_name}_qc1_num_samples_with_proportion_failed_probes.csv', analysis_name=analysis_name),
+        qc_report=expand('qc/prenormalization/4_{analysis_name}_qc1_minfi_qc_report.pdf', analysis_name=analysis_name)
+    shell:
+        """
+        Rscript scripts/removeFailedQCandGenerateReport.R \
+            -i {input.rgset} \
+            -f {input.failed_qc} \
+            -d {output.detection_pvals} \
+            -p {output.probe_qc} \
+            -s {output.sample_qc} \
+            -o {output.rgset_qc}
+        """
+
+# ---- 5. Pre-normalization manual QC2
+
+rule remove_failed_qc2_and_generate_report:
+    input:
+        rgset=expand('procdata/4_{analysis_name}_RGSet_qc1.qs', analysis_name=analysis_name),
+        failed_qc=failed_qc2
+    output:
+        rgset_qc2=expand('procdata/5_{analysis_name}_RGSet_qc2.qs', analysis_name=analysis_name),
+        detection_pvals=expand('qc/prenormalization/5_{analysis_name}_qc2_detection_pvals.csv', analysis_name=analysis_name),
+        probe_qc=expand('qc/prenormalization/5_{analysis_name}__qc2_probes_failed_per_sample_p0.01.csv', analysis_name=analysis_name),
+        sample_qc=expand('qc/prenormalization/5_{analysis_name}_qc2_num_samples_with_proportion_failed_probes.csv', analysis_name=analysis_name)    shell:
+        """
+        Rscript scripts/removeFailedQCandGenerateReport.R \
+            -i {input.rgset} \
+            -f {input.failed_qc} \
+            -d {output.detection_pvals} \
+            -p {output.probe_qc} \
+            -s {output.sample_qc} \
+            -o {output.rgset_qc2}
+        """
+
+# ---- 6. Pre-normalization manual QC3
+
+rule remove_failed_qc3_and_generate_report:
+    input:
+        rgset=expand('procdata/5_{analysis_name}_RGSet_qc2.qs', analysis_name=analysis_name),
+        failed_qc=failed_qc3
+    output:
+        rgset_qc3=expand('procdata/6_{analysis_name}_RGSet_qc3.qs', analysis_name=analysis_name),
+        detection_pvals=expand('qc/prenormalization/6_{analysis_name}_detection_pvals.csv', analysis_name=analysis_name),
+        probe_qc=expand('qc/prenormalization/6_{analysis_name}__qc3_probes_failed_per_sample_p0.01.csv', analysis_name=analysis_name),
+        sample_qc=expand('qc/prenormalization/6_{analysis_name}_qc3_num_samples_with_proportion_failed_probes.csv', analysis_name=analysis_name),
+        qc_report=expand('qc/prenormalization/6_{analysis_name}_qc3_minfi_qc_report.pdf', analysis_name=analysis_name)
+    shell:
+        """
+        Rscript scripts/removeFailedQCandGenerateReport.R \
+            -i {input.rgset} \
+            -f {input.failed_qc} \
+            -d {output.detection_pvals} \
+            -p {output.probe_qc} \
+            -s {output.sample_qc} \
+            -o {output.rgset_qc2}
+        """
+
+# ---- 7. Functional normalize RGSet
