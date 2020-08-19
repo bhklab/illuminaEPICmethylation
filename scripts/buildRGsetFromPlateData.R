@@ -68,7 +68,7 @@ message("Annotating RGChannelSets...\n")
 
 sampleLabels <- lapply(labelledArrays, FUN=.buildSampleName)
 
-.labelRGSet <- function(rgSet, sampleLabel) { 
+.labelRGSet <- function(rgSet, sampleLabel) {
     sampleNames(rgSet) <- sampleLabel
     return(rgSet)
 }
@@ -90,7 +90,9 @@ finalRGSets <- mapply(FUN=.addMetadata,
 # ---- 5. Merge the RGSets into a single object
 message("Merging RGSets into one object...\n")
 
-.combineArrays <- function(x1, x2) combineArrays(x1, x2, outType='IlluminaHumanMethylationEPIC')
+.combineArrays <- function(rgSet1, rgSet2) {
+    combineArrays(rgSet1, rgSet2, outType='IlluminaHumanMethylationEPIC')
+}
 
 finalRGSet <- Reduce(f=.combineArrays, finalRGSets)
 
