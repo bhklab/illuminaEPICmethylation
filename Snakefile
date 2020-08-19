@@ -87,7 +87,7 @@ rule generate_microarray_qc_report:
     output:
         detection_pvals=expand('qc/2_{analysis_name}_detection_pvals.csv', analysis_name=analysis_name),
         probe_qc=expand('qc/2_{analysis_name}_probes_failed_per_sample_p0.01.csv', analysis_name=analysis_name),
-        sample_qc=expand('qc/2_{analysis_name}_num_samples_failed_at_pval_cutoff.csv', analysis_name=analysis_name),
+        sample_qc=expand('qc/2_{analysis_name}_num_samples_with_proportion_failed_probes.csv', analysis_name=analysis_name),
         qc_report=expand('qc/2_{analysis_name}_minfi_qc_report.pdf', analysis_name=analysis_name)
     shell:
         """
@@ -107,3 +107,5 @@ rule preprocess_rgset_to_methylset:
         """
         Rscript scripts/preprocessRGSetToMethylSet.R -i {input.rgset} -f {output.qc_figures} -o {output.methylset}
         """
+
+# ---- 4. First round of QC:

@@ -136,7 +136,7 @@ sums_of_failed_positions <- colSums(failed)
 # apply(stanford_meth_pvals, 2, sum)/nrow(stanford_meth_pvals)
 
 # Save a file with the fraction of failed positions per sample
-write.table(fractions_of_failed_positions , 
+write.table(fractions_of_failed_positions, 
             file=file.path(qc_dir, "pval01_fractions_of_failed_positions_per_sample_304samples.tsv"), 
             sep = "\t ", na = "NA", row.names = TRUE, col.names = TRUE)
 
@@ -328,7 +328,7 @@ sum(rowMeans(failed) > 0.0036)
 
 
 ## Remove 22 Jurkat DNA samples (these are just controls for assay performance)
-## I think fully methylated Jurkat DNA may affect normalization?
+## I think fully methylated Jurkat DNA may affect normalization? Agreed
 p1_failed_expQC <- c("B2", "D5", "F9", "A1", "C4", "E8", "G11")
 p2_failed_expQC <- c("F3", "E6", "C8", "A12", "E4", "D7", "B11")
 p3_failed_expQC <- c("B7", "H2", "G3", "D5", "A6", "B9", "A10")

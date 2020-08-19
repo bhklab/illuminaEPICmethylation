@@ -11,3 +11,10 @@ plate_labels:
 nthread: 14
 
 analysis_name: 'stanford_LMS'
+
+# Each item is for the corresponding plate
+failed_experimental_qc:
+    - 'B5,C2,D2,F6,H1,H3'
+    - 'D5,D6,F5,F6,G6,H5'
+    - 'C7,C8,D5'
+ 
