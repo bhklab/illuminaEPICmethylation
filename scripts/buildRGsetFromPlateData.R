@@ -12,28 +12,39 @@ option_list <- list(
     make_option(c('-l', '--labels'), 
         help=c("A comma separated list of paths to the labels for each plate, in the same order as '--plates'."), 
         type="character"),
+    make_option(c('-o', '--output'), 
+        help='Path and filename to save the output to.', 
+        type='character'),
     make_option(c('-n', '--nthread'), 
-        help=c("The number of threads to parallelize over.", 
-        type='integer', default=1))
+        help=c("The number of threads to parallelize over."), 
+        type='integer', default=1)
 )
 
-opts <- OptionParser(option_list=option_list)
+opt <- parse_args(OptionParser(option_list=option_list))
 
 
 # ---- 1. Read in data
-message("Reading in plate data...")
+message("Reading in plate data...\n")
 
-plateDirs <- strsplit(opts$plates, ',')
+
+plateDirs <- strsplit(opt$plates, ' ')
 arrays <- lapply(plateDirs, FUN=read.metharray.sheet)
 
 
 # ---- 2. Label array data
-message("Reading in plate labels...")
+message("Reading in plate labels...\n")
 
-labelsPaths <- strsplit(opts$labels, ',')
-labels <- lapply(labelPaths, FUN=read.csv, stringsAsFactors=FALSE)
+labelPaths <- strsplit(opt$labels, ' ')
 
-message("Labelling plate data...")
+print(labelPaths)
+print(getwd())
+
+label1 <- read.csv(labelPaths[[1]])
+print(label1)
+
+labels <- lapply(labelPaths, read.csv)
+
+message("Labelling plate data...\n")
 
 .labelArray <- function(array, label) {
     array$Sample_Group <- label$Group
@@ -46,13 +57,13 @@ labelledArrays <- mapply(FUN=.labelArray,  # Function to apply
 
 
 # ---- 3. Read data into RGChannelSet objects
-message("Building RGChannelSets from array data...")
+message("Building RGChannelSets from array data...\n")
 
 rgSets <- lapply(labelledArrays, FUN=read.metharray.exp)
 
 
 # --- 4. Annotate the RGChannelSet objects
-message("Annotating RGChannelSets...")
+message("Annotating RGChannelSets...\n")
 
 .buildSampleName <- function(labelledArray) {
     paste(labelledArray$Sample_Plate, labelledArray$Sample_Well, labelledArray$Sample_Group, sep='-')
@@ -80,3 +91,15 @@ finalRGSets <- mapply(FUN=.addMetadata,
 
 
 # ---- 5. Merge the RGSets into a single object
+message("Merging RGSets into one object...\n")
+
+.combineArrays <- function(x1, x2) combineArrays(x1, x2, outType='IlluminaHumanMethylationEPIC')
+
+finalRGSet <- Reduce(FUN=.combineArrays, finalRGSets)
+
+# ---- 6. Save the RGSet to disk
+message("Saving merged RGSet to disk...\n")
+
+qsave(finalRGSet, file=opt$output)
+
+message("Done!\n\n")

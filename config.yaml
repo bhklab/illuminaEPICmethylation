@@ -9,3 +9,5 @@ plate_labels:
     - 'labels/plate3_labels.csv'
 
 nthread: 14
+
+analysis_name: 'stanford_LMS'

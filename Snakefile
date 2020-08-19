@@ -7,6 +7,7 @@ configfile: 'config.yaml'
 plate_data_dirs = config['plate_data_dirs']
 plate_labels = config['plate_labels']
 nthread = config['nthread']
+analysis_name = config['analysis_name']
 
 # ---- 0.
 
@@ -18,10 +19,10 @@ rule build_rgset_from_plate_data:
         plates=expand('rawdata/{plate_dirs}', plate_dirs=plate_data_dirs),\
         labels=expand('metadata/{labels}', labels=plate_labels)
     output:
-        expand('rawdata/{analysis_name}', analysis_name=analysis_name)
+        expand('rawdata/1_{analysis_name}_RGSet_raw.qs', analysis_name=analysis_name)
     shell:
-    """
-    Rscript -e 
-    """
+        """
+        Rscript scripts/buildRGsetFromPlateData.R -p '{input.plates}' -l '{input.labels}' -o {output} -n {nthread}
+        """
 
-# ---- 2. Quality control
+# ---- 2. 
