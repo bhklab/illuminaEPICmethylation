@@ -54,7 +54,11 @@ rule build_rgset_from_plate_data:
         expand('procdata/1_{analysis_name}_RGSet_raw.qs', analysis_name=analysis_name)
     shell:
         """
-        Rscript scripts/buildRGsetFromPlateData.R -p '{input.plates}' -l '{input.labels}' -o '{output}' -n {nthread}
+        Rscript scripts/buildRGsetFromPlateData.R \
+            -p '{input.plates}' \ 
+            -l '{input.labels}' \
+            -o '{output}' \
+            -n {nthread}
         """
 
 
@@ -95,7 +99,11 @@ rule generate_microarray_qc_report:
         qc_report=expand('qc/2_{analysis_name}_minfi_qc_report.pdf', analysis_name=analysis_name)
     shell:
         """
-        Rscript scripts/generateMicroarrayQCReport.R -i {input.rgset} -d {output.detection_pvals} -p {output.probe_qc} -s {output.sample_qc} -r {output.qc_report}
+        Rscript scripts/generateMicroarrayQCReport.R \
+            -i {input.rgset} -d {output.detection_pvals} \
+            -p {output.probe_qc} \
+            -s {output.sample_qc} \
+            -r {output.qc_report}
         """
 
 
@@ -109,7 +117,10 @@ rule preprocess_rgset_to_methylset:
         methylset=expand('procdata/3_{analysis_name}_methylset.qs', analysis_name=analysis_name)
     shell:
         """
-        Rscript scripts/preprocessRGSetToMethylSet.R -i {input.rgset} -f {output.qc_figures} -o {output.methylset}
+        Rscript scripts/preprocessRGSetToMethylSet.R \
+            -i {input.rgset} \
+            -f {output.qc_figures} \
+            -o {output.methylset}
         """
 
 
@@ -118,10 +129,14 @@ rule preprocess_rgset_to_methylset:
 
 # ---- 4. Pre-normalization manual QC1
 
+## Outlier samples with low signal from methylated and unmethylated channels, 
+## low values of control probes and poor density plots: Removed 15 samples that 
+## failed at least two different QC metrics
+
 rule remove_failed_qc1_and_generate_report:
     input:
         rgset=expand('procdata/1_{analysis_name}_RGSet_raw.qs', analysis_name=analysis_name),
-        failed_qc=failed_qc1
+        failed_qc=expand('{failed_qc1}', failed_qc1=failed_qc1)
     output:
         rgset_qc=expand('procdata/4_{analysis_name}_RGSet_qc1.qs', analysis_name=analysis_name),
         detection_pvals=expand('qc/prenormalization/4_{analysis_name}_qc1_detection_pvals.csv', analysis_name=analysis_name),
@@ -132,55 +147,55 @@ rule remove_failed_qc1_and_generate_report:
         """
         Rscript scripts/removeFailedQCandGenerateReport.R \
             -i {input.rgset} \
-            -f {input.failed_qc} \
+            -f '{input.failed_qc}' \
             -d {output.detection_pvals} \
             -p {output.probe_qc} \
             -s {output.sample_qc} \
             -o {output.rgset_qc}
         """
 
-# ---- 5. Pre-normalization manual QC2
+# # ---- 5. Pre-normalization manual QC2
 
-rule remove_failed_qc2_and_generate_report:
-    input:
-        rgset=expand('procdata/4_{analysis_name}_RGSet_qc1.qs', analysis_name=analysis_name),
-        failed_qc=failed_qc2
-    output:
-        rgset_qc2=expand('procdata/5_{analysis_name}_RGSet_qc2.qs', analysis_name=analysis_name),
-        detection_pvals=expand('qc/prenormalization/5_{analysis_name}_qc2_detection_pvals.csv', analysis_name=analysis_name),
-        probe_qc=expand('qc/prenormalization/5_{analysis_name}__qc2_probes_failed_per_sample_p0.01.csv', analysis_name=analysis_name),
-        sample_qc=expand('qc/prenormalization/5_{analysis_name}_qc2_num_samples_with_proportion_failed_probes.csv', analysis_name=analysis_name)    shell:
-        """
-        Rscript scripts/removeFailedQCandGenerateReport.R \
-            -i {input.rgset} \
-            -f {input.failed_qc} \
-            -d {output.detection_pvals} \
-            -p {output.probe_qc} \
-            -s {output.sample_qc} \
-            -o {output.rgset_qc2}
-        """
+# rule remove_failed_qc2_and_generate_report:
+#     input:
+#         rgset=expand('procdata/4_{analysis_name}_RGSet_qc1.qs', analysis_name=analysis_name),
+#         failed_qc=failed_qc2
+#     output:
+#         rgset_qc2=expand('procdata/5_{analysis_name}_RGSet_qc2.qs', analysis_name=analysis_name),
+#         detection_pvals=expand('qc/prenormalization/5_{analysis_name}_qc2_detection_pvals.csv', analysis_name=analysis_name),
+#         probe_qc=expand('qc/prenormalization/5_{analysis_name}__qc2_probes_failed_per_sample_p0.01.csv', analysis_name=analysis_name),
+#         sample_qc=expand('qc/prenormalization/5_{analysis_name}_qc2_num_samples_with_proportion_failed_probes.csv', analysis_name=analysis_name)    shell:
+#         """
+#         Rscript scripts/removeFailedQCandGenerateReport.R \
+#             -i {input.rgset} \
+#             -f {input.failed_qc} \
+#             -d {output.detection_pvals} \
+#             -p {output.probe_qc} \
+#             -s {output.sample_qc} \
+#             -o {output.rgset_qc2}
+#         """
 
-# ---- 6. Pre-normalization manual QC3
+# # ---- 6. Pre-normalization manual QC3
 
-rule remove_failed_qc3_and_generate_report:
-    input:
-        rgset=expand('procdata/5_{analysis_name}_RGSet_qc2.qs', analysis_name=analysis_name),
-        failed_qc=failed_qc3
-    output:
-        rgset_qc3=expand('procdata/6_{analysis_name}_RGSet_qc3.qs', analysis_name=analysis_name),
-        detection_pvals=expand('qc/prenormalization/6_{analysis_name}_detection_pvals.csv', analysis_name=analysis_name),
-        probe_qc=expand('qc/prenormalization/6_{analysis_name}__qc3_probes_failed_per_sample_p0.01.csv', analysis_name=analysis_name),
-        sample_qc=expand('qc/prenormalization/6_{analysis_name}_qc3_num_samples_with_proportion_failed_probes.csv', analysis_name=analysis_name),
-        qc_report=expand('qc/prenormalization/6_{analysis_name}_qc3_minfi_qc_report.pdf', analysis_name=analysis_name)
-    shell:
-        """
-        Rscript scripts/removeFailedQCandGenerateReport.R \
-            -i {input.rgset} \
-            -f {input.failed_qc} \
-            -d {output.detection_pvals} \
-            -p {output.probe_qc} \
-            -s {output.sample_qc} \
-            -o {output.rgset_qc2}
-        """
+# rule remove_failed_qc3_and_generate_report:
+#     input:
+#         rgset=expand('procdata/5_{analysis_name}_RGSet_qc2.qs', analysis_name=analysis_name),
+#         failed_qc=failed_qc3
+#     output:
+#         rgset_qc3=expand('procdata/6_{analysis_name}_RGSet_qc3.qs', analysis_name=analysis_name),
+#         detection_pvals=expand('qc/prenormalization/6_{analysis_name}_detection_pvals.csv', analysis_name=analysis_name),
+#         probe_qc=expand('qc/prenormalization/6_{analysis_name}__qc3_probes_failed_per_sample_p0.01.csv', analysis_name=analysis_name),
+#         sample_qc=expand('qc/prenormalization/6_{analysis_name}_qc3_num_samples_with_proportion_failed_probes.csv', analysis_name=analysis_name),
+#         qc_report=expand('qc/prenormalization/6_{analysis_name}_qc3_minfi_qc_report.pdf', analysis_name=analysis_name)
+#     shell:
+#         """
+#         Rscript scripts/removeFailedQCandGenerateReport.R \
+#             -i {input.rgset} \
+#             -f {input.failed_qc} \
+#             -d {output.detection_pvals} \
+#             -p {output.probe_qc} \
+#             -s {output.sample_qc} \
+#             -o {output.rgset_qc2}
+#         """
 
 # ---- 7. Functional normalize RGSet
