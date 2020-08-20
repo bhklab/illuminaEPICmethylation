@@ -39,10 +39,11 @@ rgSet <- qread(opt$input)
 # ---- 2. Subset out failed samples
 message('Removing failed samples...\n')
 
-colData <- data.table(colData(rgSet))
+colData <- data.table(as.data.frame(colData(rgSet)))
 
 perPlateFailedSamples <- strsplit(opt$failed, split=' ')
 failedSampleList <- lapply(perPlateFailedSamples, FUN=strsplit, split=',')
+failedSampleList <- lapply(failedSampleList, unlist, recursive=FALSE)
 
 # NOTE: This assumes that the sorted plates are in the same order as samples/wells 
 #   in the config.yml file!
@@ -63,6 +64,7 @@ dropIndexes <- unlist(mapply(
 keepIndexes <- setdiff(seq_len(nrow(colData)), dropIndexes)
 
 rgSet <- rgSet[, keepIndexes]
+qsave(rgSet, file=opt$output)
 
 # ---- 3. Summarize detection p-value qc metrics
 message("Summarizing QC metrics based on detection p-value...\n")
