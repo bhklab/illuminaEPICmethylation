@@ -29,7 +29,7 @@ summarizeDetectionPvalueQC <- function(rgSet, pValue=0.01) {
 
     message('Summarizing probes per sample QC...')
 
-    resultList$sampleQC <- data.table(
+    resultList$probeQC <- data.table(
         'sample'=colnames(detectionPvalues),
         'fraction_failed_positions'=colMeans(failed),
         'sum_failed_positions'=colSums(failed)
@@ -37,7 +37,7 @@ summarizeDetectionPvalueQC <- function(rgSet, pValue=0.01) {
 
     message('Summarizing number of samples with each proportion of failed probes...')
 
-    resultList$probeQC <- data.table(
+    resultList$sampleQC <- data.table(
         'samples_gt_0.5_failed'=sum(rowMeans(failed) > 0.5),
         'samples_gt_0.1_failed'=sum(rowMeans(failed) > 0.1),
         'samples_gt_0.05_failed'=sum(rowMeans(failed) > 0.05),

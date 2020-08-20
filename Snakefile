@@ -109,7 +109,7 @@ rule generate_microarray_qc_report:
 
 # ---- 3. Preprocess microarray intensities to methylation values
 
-rule preprocess_rgset_to_methylset:
+rule convert_rgset_to_methylset_for_qc:
     input:
         rgset=expand('procdata/1_{analysis_name}_RGSet_raw.qs', analysis_name=analysis_name)
     output:
@@ -152,48 +152,46 @@ rule remove_failed_qc1_and_generate_report:
             -o {output.rgset_qc}
         """
 
-# # ---- 5. Pre-normalization manual QC2
+# ---- 5. Pre-normalization manual QC2
 
 rule remove_failed_qc2_and_generate_report:
     input:
-        rgset=expand('procdata/4_{analysis_name}_RGSet_qc1.qs', analysis_name=analysis_name),
-        failed_qc=failed_qc2
+        rgset=expand('procdata/4_{analysis_name}_RGSet_qc1.qs', analysis_name=analysis_name)
     output:
         rgset_qc2=expand('procdata/5_{analysis_name}_RGSet_qc2.qs', analysis_name=analysis_name),
         detection_pvals=expand('qc/prenormalization/5_{analysis_name}_qc2_detection_pvals.csv', analysis_name=analysis_name),
         probe_qc=expand('qc/prenormalization/5_{analysis_name}__qc2_probes_failed_per_sample_p0.01.csv', analysis_name=analysis_name),
-        sample_qc=expand('qc/prenormalization/5_{analysis_name}_qc2_num_samples_with_proportion_failed_probes.csv', analysis_name=analysis_name)    shell:
+        sample_qc=expand('qc/prenormalization/5_{analysis_name}_qc2_num_samples_with_proportion_failed_probes.csv', analysis_name=analysis_name)    
+    shell:
         """
         Rscript scripts/removeFailedQCandGenerateReport.R \
             -i {input.rgset} \
-            -f {input.failed_qc} \
+            -f '{failed_qc2}' \
             -d {output.detection_pvals} \
             -p {output.probe_qc} \
             -s {output.sample_qc} \
             -o {output.rgset_qc2}
         """
 
-# # ---- 6. Pre-normalization manual QC3
+# ---- 6. Pre-normalization manual QC3
 
-# rule remove_failed_qc3_and_generate_report:
-#     input:
-#         rgset=expand('procdata/5_{analysis_name}_RGSet_qc2.qs', analysis_name=analysis_name),
-#         failed_qc=failed_qc3
-#     output:
-#         rgset_qc3=expand('procdata/6_{analysis_name}_RGSet_qc3.qs', analysis_name=analysis_name),
-#         detection_pvals=expand('qc/prenormalization/6_{analysis_name}_detection_pvals.csv', analysis_name=analysis_name),
-#         probe_qc=expand('qc/prenormalization/6_{analysis_name}__qc3_probes_failed_per_sample_p0.01.csv', analysis_name=analysis_name),
-#         sample_qc=expand('qc/prenormalization/6_{analysis_name}_qc3_num_samples_with_proportion_failed_probes.csv', analysis_name=analysis_name),
-#         qc_report=expand('qc/prenormalization/6_{analysis_name}_qc3_minfi_qc_report.pdf', analysis_name=analysis_name)
-#     shell:
-#         """
-#         Rscript scripts/removeFailedQCandGenerateReport.R \
-#             -i {input.rgset} \
-#             -f {input.failed_qc} \
-#             -d {output.detection_pvals} \
-#             -p {output.probe_qc} \
-#             -s {output.sample_qc} \
-#             -o {output.rgset_qc2}
-#         """
+rule remove_failed_qc3_and_generate_report:
+    input:
+        rgset=expand('procdata/5_{analysis_name}_RGSet_qc2.qs', analysis_name=analysis_name)
+    output:
+        rgset_qc3=expand('procdata/6_{analysis_name}_RGSet_qc3.qs', analysis_name=analysis_name),
+        detection_pvals=expand('qc/prenormalization/6_{analysis_name}_detection_pvals.csv', analysis_name=analysis_name),
+        probe_qc=expand('qc/prenormalization/6_{analysis_name}__qc3_probes_failed_per_sample_p0.01.csv', analysis_name=analysis_name),
+        sample_qc=expand('qc/prenormalization/6_{analysis_name}_qc3_num_samples_with_proportion_failed_probes.csv', analysis_name=analysis_name)
+    shell:
+        """
+        Rscript scripts/removeFailedQCandGenerateReport.R \
+            -i {input.rgset} \
+            -f '{failed_qc3}' \
+            -d {output.detection_pvals} \
+            -p {output.probe_qc} \
+            -s {output.sample_qc} \
+            -o {output.rgset_qc3}
+        """
 
 # ---- 7. Functional normalize RGSet
