@@ -195,3 +195,14 @@ rule remove_failed_qc3_and_generate_report:
         """
 
 # ---- 7. Functional normalize RGSet
+
+rule functional_normalize_rgset_to_methylset:
+    input:
+        rgset=f'procdata/6_{analysis_name}_RGSet_qc3.qs'
+    output:
+        methylset=f'procdata/7_{analysis_name}_methylset_raw.qs',
+        qc_report=f'qc/normalized/7_{analysis_name}_methylset_qc1.csv'
+    shell:
+        """
+        Rscript scripts/functionalNormalizeAndQC.R -i {input.rgset} -o {output.methylset} -q {output.qc_report}
+        """
