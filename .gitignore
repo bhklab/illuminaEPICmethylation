@@ -1,4 +1,3 @@
-packrat/*
 .Rprofile
 .snakemake
 metadata
@@ -6,6 +5,3 @@ rawdata
 procdata
 results
 qc
-
-!packrat/packrat.lock
-packrat/lib*/
