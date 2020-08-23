@@ -17,7 +17,8 @@ option_list <- list(
         type="character"),
     make_option(c('-q', '--qc'), 
         help='Path to save the qc file to.', 
-        type='character')
+        type='character'),
+
 )
 
 opt <- parse_args(OptionParser(option_list=option_list))

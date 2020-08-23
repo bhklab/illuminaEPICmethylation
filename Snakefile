@@ -55,7 +55,7 @@ rule build_rgset_from_plate_data:
     shell:
         """
         Rscript scripts/buildRGsetFromPlateData.R \
-            -p '{input.plates}' \ 
+            -p '{input.plates}' \
             -l '{input.labels}' \
             -o '{output}' \
             -n {nthread}
@@ -201,8 +201,76 @@ rule functional_normalize_rgset_to_methylset:
         rgset=f'procdata/6_{analysis_name}_RGSet_qc3.qs'
     output:
         methylset=f'procdata/7_{analysis_name}_methylset_raw.qs',
-        qc_report=f'qc/normalized/7_{analysis_name}_methylset_qc1.csv'
+        qc_report=f'qc/normalized/7_{analysis_name}_methylset_qc1.csv',
+        plot=f'qc/normalized/7_{analysis_name}_normalized vs unnormalized_distributions.pdf'
     shell:
         """
-        Rscript scripts/functionalNormalizeAndQC.R -i {input.rgset} -o {output.methylset} -q {output.qc_report}
+        Rscript scripts/functionalNormalizeAndQC.R \
+            -i {input.rgset} \
+            -o {output.methylset} \
+            -r {output.qc_report}
+        """
+
+# ---- 8. Visualize normalied data vs QC2 and QC3 unnormalized data
+
+rule plot_normalized_vs_qc2_and_qc3:
+    input:
+        rgset_qc2=f'procdata/5_{analysis_name}_RGSet_qc2.qs',
+        rgset_qc3=f'procdata/6_{analysis_name}_RGSet_qc3.qs',
+        normalized=f'procdata/7_{analysis_name}_methylset_raw.qs'
+    output:
+        plot=f'qc/normalized/',
+    shell:
+        """
+        Rscript plotNormalizedVsQc2andQc3.R \
+            -qc2 {input.rgset_qc2} \
+            -qc3 {input.rgset_qc3} \
+            -n {input.normalized} \
+            -o {output.plot}
+        """
+
+# ---- 9. Convert GenomicMethylSet to GenomicRatioSet and add annotations
+
+rule convert_gmset_to_grset_and_annotate:
+    input:
+    output:
+    shell:
+        """
+        Rscript convertGMSetToGRSetAndAnnotate.R \
+            - i \
+            - o 
+        """
+
+
+# ---- 10. Filter poor quality probes
+rule filter_grset_poor_quality_probes:
+    input:
+    output:
+    shell:
+        """
+        Rscript filterGRSetPoorQualityProbes \
+            -i 
+        """
+
+
+# ---- 11. SNP correction
+
+rule correct_grset_for_snps:
+    input:
+    output:
+    shell:
+        """
+        Rscript correctGRSetForSNPs.R \
+            -i  
+        """
+
+# ---- 12. Correct for cross-reactive probes
+
+rule correct_grset_for_crossreactive_probes:
+    input:
+    output:
+    shell:
+        """
+        Rscript correctGRSetForCrossReactiveProbesS.R \
+            -i 
         """
