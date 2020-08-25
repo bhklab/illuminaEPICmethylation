@@ -266,7 +266,7 @@ stanford_meth_rgSet_QC2 <- stanford_meth_rgSet_QC1[,
                                                ]
 
 stanford_meth_rgSet_QC2
-# class: RGChannelSet 
+# class: RGChannelSet
 # dim: 1051815 284 
 # metadata(0):
 #   assays(2): Green Red

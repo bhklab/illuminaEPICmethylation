@@ -38,6 +38,7 @@ print(table(keep))
 
 grSet <- grSet[keep, ]
 
+
 # ---- 3. Save filtered RGSet
 message(paste0('\nSaving GenomicRatioSet to: ', opt$output, '...\n'))
 

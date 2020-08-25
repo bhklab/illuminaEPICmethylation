@@ -28,3 +28,11 @@ failed_qc3:
     - 'B7,H2,G3,D5,A6,B9,A10'
     - 'A1'
  
+# Regex columns based on these strings
+# NOTE: underscores get substituted to spaces inside the R script
+cancer_types:
+    - 'LMS'
+    - 'LM'
+    - 'GIST'
+    - 'DTF'
+    - 'DTF_het'

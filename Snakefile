@@ -34,6 +34,7 @@ import re
 # ---- 0. Load analysis specific configuration files and assign to local variables
 configfile: 'config.yaml'
 
+# Unpack
 plate_data_dirs = config['plate_data_dirs']
 plate_labels = config['plate_labels']
 nthread = config['nthread']
@@ -42,6 +43,8 @@ analysis_name = config['analysis_name']
 failed_qc1=config['failed_qc1']
 failed_qc2=config['failed_qc2']
 failed_qc3=config['failed_qc3']
+
+cancer_types=config['cancer_types']
 
 
 # ---- 1. Build minfi RGSet from raw plate data and labels
@@ -283,6 +286,7 @@ rule correct_grset_for_snps:
             -o {output.drop_snps_grset}
         """
 
+
 # ---- 12. Correct for cross-reactive probes
 
 rule correct_grset_for_crossreactive_probes:
@@ -295,4 +299,21 @@ rule correct_grset_for_crossreactive_probes:
         Rscript scripts/12_correctGRSetForCrossReactiveProbes.R \
             -g {input.grset} \
             -o {output.drop_xreactive_grset}
+        """
+
+
+# ---- 13. Subset grSet by cancer type
+
+rule subset_grset_by_cancer_types:
+    input:
+        grset=f'procdata/12_{analysis_name}_genomicratioset_drop_sex_filter_probes_drop_snp_xreactive.qs'
+    output:
+        grset=f'results/13_{analysis_name}_all_types_genomicratioset.qs',
+        grsets=expand('results/13_{analysis_name}_{cancer_type}_genomicratioset.qs', analysis_name=analysis_name, cancer_type=cancer_types)
+    shell:
+        """
+        Rscript scripts/13_subsetSamplesByCancerType.R \
+            -g {input.grset} \
+            -s '{cancer_types}' \
+            -o '{output.grset} {output.grsets}'
         """
