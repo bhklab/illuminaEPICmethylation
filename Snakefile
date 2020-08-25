@@ -219,14 +219,14 @@ rule plot_normalized_vs_qc2_and_qc3:
         rgset_qc3=f'procdata/6_{analysis_name}_RGSet_qc3.qs',
         normalized=f'procdata/7_{analysis_name}_methylset_raw.qs'
     output:
-        plot=f'qc/normalized/',
+        plot1=f'qc/normalized/8_{analysis_name}_normalied_vs_unnormalized_QC2.pdf',
+        plot2=f'qc/normalized/8_{analysis_name}_normalied_vs_unnormalized_QC3.pdf'
     shell:
         """
-        Rscript plotNormalizedVsQc2andQc3.R \
-            -qc2 {input.rgset_qc2} \
-            -qc3 {input.rgset_qc3} \
+        Rscript scripts/plotNormalizedVsQc2AndQc3.R \
+            -q '{input.rgset_qc2} {input.rgset_qc3}' \
             -n {input.normalized} \
-            -o {output.plot}
+            -o '{output.plot1} {output.plot2}'
         """
 
 # ---- 9. Convert GenomicMethylSet to GenomicRatioSet and add annotations
