@@ -54,7 +54,7 @@ rule build_rgset_from_plate_data:
         expand('procdata/1_{analysis_name}_RGSet_raw.qs', analysis_name=analysis_name)
     shell:
         """
-        Rscript scripts/buildRGsetFromPlateData.R \
+        Rscript scripts/1_buildRGsetFromPlateData.R \
             -p '{input.plates}' \
             -l '{input.labels}' \
             -o '{output}' \
@@ -99,7 +99,7 @@ rule generate_microarray_qc_report:
         qc_report=expand('qc/2_{analysis_name}_minfi_qc_report.pdf', analysis_name=analysis_name)
     shell:
         """
-        Rscript scripts/generateMicroarrayQCReport.R \
+        Rscript scripts/2_generateMicroarrayQCReport.R \
             -i {input.rgset} -d {output.detection_pvals} \
             -p {output.probe_qc} \
             -s {output.sample_qc} \
@@ -123,6 +123,9 @@ rule convert_rgset_to_methylset_for_qc:
             -o {output.methylset}
         """
 
+## NOTE: The manual QC steps below are specific to this analysis, it  is likely we can 
+##  reduce these three steps to a single step wherein a user specifies ALL plate-well
+##  combinations which fail manual QC.
 
 ## FIXME: How can I reuse a rule with different outputs?
 ## TODO: Determine if we can automate any manual QC steps
@@ -143,7 +146,7 @@ rule remove_failed_qc1_and_generate_report:
         sample_qc=expand('qc/prenormalization/4_{analysis_name}_qc1_num_samples_with_proportion_failed_probes.csv', analysis_name=analysis_name)
     shell:
         """
-        Rscript scripts/removeFailedQCandGenerateReport.R \
+        Rscript scripts/4_5_6_removeFailedQCandGenerateReport.R \
             -i {input.rgset} \
             -f '{failed_qc1}' \
             -d {output.detection_pvals} \
@@ -151,6 +154,7 @@ rule remove_failed_qc1_and_generate_report:
             -s {output.sample_qc} \
             -o {output.rgset_qc}
         """
+
 
 # ---- 5. Pre-normalization manual QC2
 
@@ -164,7 +168,7 @@ rule remove_failed_qc2_and_generate_report:
         sample_qc=expand('qc/prenormalization/5_{analysis_name}_qc2_num_samples_with_proportion_failed_probes.csv', analysis_name=analysis_name)    
     shell:
         """
-        Rscript scripts/removeFailedQCandGenerateReport.R \
+        Rscript scripts/4_5_6_removeFailedQCandGenerateReport.R \
             -i {input.rgset} \
             -f '{failed_qc2}' \
             -d {output.detection_pvals} \
@@ -172,6 +176,7 @@ rule remove_failed_qc2_and_generate_report:
             -s {output.sample_qc} \
             -o {output.rgset_qc2}
         """
+
 
 # ---- 6. Pre-normalization manual QC3
 
@@ -185,7 +190,7 @@ rule remove_failed_qc3_and_generate_report:
         sample_qc=expand('qc/prenormalization/6_{analysis_name}_qc3_num_samples_with_proportion_failed_probes.csv', analysis_name=analysis_name)
     shell:
         """
-        Rscript scripts/removeFailedQCandGenerateReport.R \
+        Rscript scripts/4_5_6_removeFailedQCandGenerateReport.R \
             -i {input.rgset} \
             -f '{failed_qc3}' \
             -d {output.detection_pvals} \
@@ -193,6 +198,7 @@ rule remove_failed_qc3_and_generate_report:
             -s {output.sample_qc} \
             -o {output.rgset_qc3}
         """
+
 
 # ---- 7. Functional normalize RGSet
 
@@ -205,11 +211,12 @@ rule functional_normalize_rgset_to_methylset:
         plot=f'qc/normalized/7_{analysis_name}_normalized vs unnormalized_distributions.pdf'
     shell:
         """
-        Rscript scripts/functionalNormalizeAndQC.R \
+        Rscript scripts/7_functionalNormalizeAndQC.R \
             -i {input.rgset} \
             -o {output.methylset} \
             -r {output.qc_report}
         """
+
 
 # ---- 8. Visualize normalied data vs QC2 and QC3 unnormalized data
 
@@ -229,16 +236,21 @@ rule plot_normalized_vs_qc2_and_qc3:
             -o '{output.plot1} {output.plot2}'
         """
 
+
 # ---- 9. Convert GenomicMethylSet to GenomicRatioSet and add annotations
 
-rule convert_gmset_to_grset_and_annotate:
+rule convert_gmset_to_grset_and_drop_sex_chromosomes:
     input:
+        methylset=f'procdata/7_{analysis_name}_methylset_raw.qs'
     output:
+        genomicmethylset=f'procdata/9_{analysis_name}_genomicmethylset.qs',
+        ratioset=f'procdata/9_{analysis_name}_genomicratioset_drop_sex_chr.qs'
     shell:
         """
-        Rscript convertGMSetToGRSetAndAnnotate.R \
-            - i \
-            - o 
+        Rscript scripts/9_convertGMSetToGRSetAndDropSexChromosomes.R \
+            -i {input.methylset} \
+            -a {output.genomicmethylset} \
+            -o {output.ratioset}
         """
 
 
