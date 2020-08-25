@@ -43,7 +43,10 @@ colData <- data.table(as.data.frame(colData(rgSet)))
 
 perPlateFailedSamples <- strsplit(opt$failed, split=' ')
 failedSampleList <- lapply(perPlateFailedSamples, FUN=strsplit, split=',')
-failedSampleList <- lapply(failedSampleList, unlist, recursive=FALSE)
+failedSampleList <- unlist(failedSampleList, recursive=FALSE)
+
+message(paste0('Failed samples per plate: '))
+print(failedSampleList)
 
 # NOTE: This assumes that the sorted plates are in the same order as samples/wells 
 #   in the config.yml file!
@@ -73,8 +76,8 @@ source('scripts/functions/summarizeDetectionPvalueQC.R')
 
 detectionPvalueSummary <- summarizeDetectionPvalueQC(rgSet, pValue=0.01)
 
-print(detectionPvalueSummary$sampleQC)
-print(t(detectionPvalueSummary$probeQC))
+print(t(detectionPvalueSummary$sampleQC))
+print(detectionPvalueSummary$probeQC)
 
 
 # ---- 4. Write summarized detection p-value qc metrics to csv

@@ -15,10 +15,9 @@ option_list <- list(
     make_option(c('-o', '--output'),
         help=c("Path to save the resulting methylSet to."),
         type="character"),
-    make_option(c('-q', '--qc'), 
+    make_option(c('-r', '--report'), 
         help='Path to save the qc file to.', 
-        type='character'),
-
+        type='character')
 )
 
 opt <- parse_args(OptionParser(option_list=option_list))
@@ -55,8 +54,8 @@ message(paste0("Saving methylSet to ", opt$output, '...\n'))
 
 qsave(methylSet, file=opt$output)
 
-message(paste0("Saving QC results to .csv in ", opt$qc, '...\n'))
-write.csv(qcDf, file=opt$qc)
+message(paste0("Saving QC results to .csv in ", opt$report, '...\n'))
+write.csv(qcDf, file=opt$report)
 
 
 message("Done!\n\n")
