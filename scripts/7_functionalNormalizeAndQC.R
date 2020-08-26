@@ -1,9 +1,9 @@
-library(minfi)
-library(optparse)
-library(IlluminaHumanMethylationEPICmanifest)
-library(IlluminaHumanMethylationEPICanno.ilm10b4.hg19)
-library(BiocParallel)
-library(qs)
+library(minfi, quietly=TRUE)
+library(optparse, quietly=TRUE)
+library(IlluminaHumanMethylationEPICmanifest, quietly=TRUE)
+library(IlluminaHumanMethylationEPICanno.ilm10b4.hg19, quietly=TRUE)
+library(BiocParallel, quietly=TRUE)
+library(qs, quietly=TRUE)
 
 
 # ---- 0. Parse CLI arguments

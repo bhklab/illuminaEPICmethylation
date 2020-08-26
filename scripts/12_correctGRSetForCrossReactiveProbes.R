@@ -1,7 +1,7 @@
-library(minfi)
-library(optparse)
-library(maxprobes)
-library(qs)
+library(minfi, quietly=TRUE)
+library(optparse, quietly=TRUE)
+library(maxprobes, quietly=TRUE)
+library(qs, quietly=TRUE)
 
 
 # ---- 0. Parse CLI arguments

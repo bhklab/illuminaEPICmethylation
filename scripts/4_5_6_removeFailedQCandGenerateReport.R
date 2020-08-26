@@ -1,8 +1,8 @@
-library(minfi)
-library(IlluminaHumanMethylationEPICmanifest)
-library(data.table)
-library(qs)
-library(optparse)
+library(minfi, quietly=TRUE)
+library(IlluminaHumanMethylationEPICmanifest, quietly=TRUE)
+library(data.table, quietly=TRUE)
+library(qs, quietly=TRUE)
+library(optparse, quietly=TRUE)
 
 
 # ---- 0. Parse CLI arguments
@@ -76,14 +76,14 @@ source('scripts/functions/summarizeDetectionPvalueQC.R')
 
 detectionPvalueSummary <- summarizeDetectionPvalueQC(rgSet, pValue=0.01)
 
-print(t(detectionPvalueSummary$sampleQC))
-print(detectionPvalueSummary$probeQC)
+print(detectionPvalueSummary$sampleQC)
+print(t(detectionPvalueSummary$probeQC))
 
 
 # ---- 4. Write summarized detection p-value qc metrics to csv
 
 message(paste0("Writing detection p-value qc metrics to: ", 
-        paste0(opt$detection, opt$probes, opt$samples, collapse=', '), '\n'))
+        paste0(opt$detection, opt$probes, opt$samples, collapse=', '), '...\n'))
 
 fwrite(detectionPvalueSummary$detectionPvals, file=opt$detection)
 fwrite(detectionPvalueSummary$sampleQC, file=opt$samples)

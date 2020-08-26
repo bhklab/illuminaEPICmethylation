@@ -1,8 +1,8 @@
-library(minfi)
-library(IlluminaHumanMethylationEPICmanifest)
-library(data.table)
-library(qs)
-library(optparse)
+library(minfi, quietly=TRUE)
+library(IlluminaHumanMethylationEPICmanifest, quietly=TRUE)
+library(data.table, quietly=TRUE)
+library(qs, quietly=TRUE)
+library(optparse, quietly=TRUE)
 
 
 # ---- 0. Parse CLI arguments

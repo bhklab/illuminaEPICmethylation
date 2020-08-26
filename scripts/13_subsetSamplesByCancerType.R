@@ -1,8 +1,8 @@
-library(minfi)
-library(optparse)
-library(maxprobes)
-library(BiocParallel)
-library(qs)
+library(minfi, quietly=TRUE)
+library(optparse, quietly=TRUE)
+library(maxprobes, quietly=TRUE)
+library(BiocParallel, quietly=TRUE)
+library(qs, quietly=TRUE)
 
 
 # ---- 0. Parse CLI arguments

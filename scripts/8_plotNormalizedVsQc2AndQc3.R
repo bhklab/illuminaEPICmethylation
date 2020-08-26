@@ -1,7 +1,7 @@
-library(minfi)
-library(optparse)
-library(RColorBrewer)
-library(qs)
+library(minfi, quietly=TRUE)
+library(optparse, quietly=TRUE)
+library(RColorBrewer, quietly=TRUE)
+library(qs, quietly=TRUE)
 
 
 # ---- 0. Parse CLI arguments

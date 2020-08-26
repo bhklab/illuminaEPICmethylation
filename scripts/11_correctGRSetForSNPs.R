@@ -1,7 +1,7 @@
-library(minfi)
-library(optparse)
-library(BiocParallel)
-library(qs)
+library(minfi, quietly=TRUE)
+library(optparse, quietly=TRUE)
+library(BiocParallel, quietly=TRUE)
+library(qs, quietly=TRUE)
 
 
 # ---- 0. Parse CLI arguments

@@ -1,8 +1,8 @@
-library(minfi)
-library(optparse)
-library(data.table)
-library(matrixStats)
-library(qs)
+library(minfi, quietly=TRUE)
+library(optparse, quietly=TRUE)
+library(data.table, quietly=TRUE)
+library(matrixStats, quietly=TRUE)
+library(qs, quietly=TRUE)
 
 
 # ---- 0. Parse CLI arguments
@@ -19,6 +19,7 @@ option_list <- list(
 )
 
 opt <- parse_args(OptionParser(option_list=option_list))
+
 
 # ---- 1. Load data
 message(paste0('Loading RGSet from: ', opt$input, '...\n'))
@@ -43,5 +44,6 @@ grSet <- grSet[keep, ]
 message(paste0('\nSaving GenomicRatioSet to: ', opt$output, '...\n'))
 
 qsave(grSet, opt$output)
+
 
 message("Done...\n\n")
