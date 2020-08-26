@@ -8,9 +8,9 @@ plate_labels:
     - 'labels/plate2_labels.csv'
     - 'labels/plate3_labels.csv'
 
-nthread: 14
+nthread: 20
 
-analysis_name: 'stanford_LMS'
+analysis_name: 'van_de_rijn'
 
 # Each item is for the corresponding plate
 failed_qc1:

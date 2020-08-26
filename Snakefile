@@ -37,7 +37,9 @@ configfile: 'config.yaml'
 # Unpack
 plate_data_dirs = config['plate_data_dirs']
 plate_labels = config['plate_labels']
+
 nthread = config['nthread']
+
 analysis_name = config['analysis_name']
 
 failed_qc1=config['failed_qc1']
@@ -54,7 +56,8 @@ rule build_rgset_from_plate_data:
         plates=expand('rawdata/{plate_dirs}', plate_dirs=plate_data_dirs),
         labels=expand('metadata/{labels}', labels=plate_labels)
     output:
-        f'procdata/1_{analysis_name}_RGSet_raw.qs'
+        f'procdata/1_{analysis_name}.RGChannelSet.qs'
+    threads: nthread
     shell:
         """
         Rscript scripts/1_buildRGsetFromPlateData.R \
@@ -94,12 +97,12 @@ rule build_rgset_from_plate_data:
 
 rule generate_microarray_qc_report:
     input:
-        rgset=f'procdata/1_{analysis_name}_RGSet_raw.qs'
+        rgset=f'procdata/1_{analysis_name}.RGChannelSet.qs'
     output:
-        detection_pvals=f'qc/2_{analysis_name}_detection_pvals.csv',
-        probe_qc=f'qc/2_{analysis_name}_probes_failed_per_sample_p0.01.csv',
-        sample_qc=f'qc/2_{analysis_name}_num_samples_with_proportion_failed_probes.csv',
-        qc_report=f'qc/2_{analysis_name}_minfi_qc_report.pdf'
+        detection_pvals=f'qc/2_{analysis_name}.RGChannelSet.detection_pvals.csv',
+        sample_qc=f'qc/2_{analysis_name}.RGChannelSet.probes_failed_per_sample_p0.01.csv',
+        probe_qc=f'qc/2_{analysis_name}.RGChannelSet.num_probes_with_proportion_failed_samples.csv',
+        qc_report=f'qc/2_{analysis_name}.RGChannelSet.minfi_qc_report.pdf'
     shell:
         """
         Rscript scripts/2_generateMicroarrayQCReport.R \
@@ -114,10 +117,10 @@ rule generate_microarray_qc_report:
 
 rule convert_rgset_to_methylset_for_qc:
     input:
-        rgset=f'procdata/1_{analysis_name}_RGSet_raw.qs'
+        rgset=f'procdata/1_{analysis_name}.RGChannelSet.qs'
     output:
-        qc_figures=f'qc/methylSet/3_{analysis_name}_methylset_preproc_qc_plots.pdf',
-        methylset=f'procdata/3_{analysis_name}_methylset.qs'
+        qc_figures=f'qc/methylSet/3_{analysis_name}.MethylSet.qc_plots.pdf',
+        methylset=f'procdata/3_{analysis_name}.MethylSet.qs'
     shell:
         """
         Rscript scripts/preprocessRGSetToMethylSet.R \
@@ -141,12 +144,12 @@ rule convert_rgset_to_methylset_for_qc:
 
 rule remove_failed_qc1_and_generate_report:
     input:
-        rgset=f'procdata/1_{analysis_name}_RGSet_raw.qs'
+        rgset=f'procdata/1_{analysis_name}.RGChannelSet.qs'
     output:
-        rgset_qc=f'procdata/4_{analysis_name}_RGSet_qc1.qs',
-        detection_pvals=f'qc/prenormalization/4_{analysis_name}_qc1_detection_pvals.csv',
-        probe_qc=f'qc/prenormalization/4_{analysis_name}_qc1_probes_failed_per_sample_p0.01.csv',
-        sample_qc=f'qc/prenormalization/4_{analysis_name}_qc1_num_samples_with_proportion_failed_probes.csv'
+        rgset_qc=f'procdata/4_{analysis_name}.RGChannelSet.qc1.qs',
+        detection_pvals=f'qc/4_{analysis_name}.RGChannlSet.qc1.detection_pvals.csv',
+        sample_qc=f'qc/4_{analysis_name}.RGChannelSet.qc1.probes_failed_per_sample_p0.01.csv',
+        probe_qc=f'qc/4_{analysis_name}.RGChannelSet.qc1.num_probes_with_proportion_failed_samples.csv'
     shell:
         """
         Rscript scripts/4_5_6_removeFailedQCandGenerateReport.R \
@@ -163,12 +166,12 @@ rule remove_failed_qc1_and_generate_report:
 
 rule remove_failed_qc2_and_generate_report:
     input:
-        rgset=f'procdata/4_{analysis_name}_RGSet_qc1.qs'
+        rgset=f'procdata/4_{analysis_name}.RGChannelSet.qc1.qs'
     output:
-        rgset_qc2=f'procdata/5_{analysis_name}_RGSet_qc2.qs',
-        detection_pvals=f'qc/prenormalization/5_{analysis_name}_qc2_detection_pvals.csv',
-        probe_qc=f'qc/prenormalization/5_{analysis_name}_qc2_probes_failed_per_sample_p0.01.csv',
-        sample_qc=f'qc/prenormalization/5_{analysis_name}_qc2_num_samples_with_proportion_failed_probes.csv'    
+        rgset_qc2=f'procdata/5_{analysis_name}.RGChannelSet.qc2.qs',
+        detection_pvals=f'qc/5_{analysis_name}.RGChannelSet.qc2.detection_pvals.csv',
+        sample_qc=f'qc/5_{analysis_name}.RGChanneLSset.qc2.probes_failed_per_sample_p0.01.csv',
+        probe_qc=f'qc/5_{analysis_name}.RGChannelSet.qc2.num_probes_with_proportion_failed_samples.csv'    
     shell:
         """
         Rscript scripts/4_5_6_removeFailedQCandGenerateReport.R \
@@ -185,12 +188,12 @@ rule remove_failed_qc2_and_generate_report:
 
 rule remove_failed_qc3_and_generate_report:
     input:
-        rgset=f'procdata/5_{analysis_name}_RGSet_qc2.qs'
+        rgset=f'procdata/5_{analysis_name}.RGChannelSet.qc2.qs'
     output:
-        rgset_qc3=f'procdata/6_{analysis_name}_RGSet_qc3.qs',
-        detection_pvals=f'qc/prenormalization/6_{analysis_name}_qc3_detection_pvals.csv',
-        probe_qc=f'qc/prenormalization/6_{analysis_name}_qc3_probes_failed_per_sample_p0.01.csv',
-        sample_qc=f'qc/prenormalization/6_{analysis_name}_qc3_num_samples_with_proportion_failed_probes.csv'
+        rgset_qc3=f'procdata/6_{analysis_name}.RGChannelSet.qc3.qs',
+        detection_pvals=f'qc/6_{analysis_name}.RGChannelSet.qc3.detection_pvals.csv',
+        sample_qc=f'qc/6_{analysis_name}.RGChannelSet.qc3.probes_failed_per_sample_p0.01.csv',
+        probe_qc=f'qc/6_{analysis_name}.RGChannelSet.qc3.num_probes_with_proportion_failed_samples.csv'
     shell:
         """
         Rscript scripts/4_5_6_removeFailedQCandGenerateReport.R \
@@ -207,10 +210,10 @@ rule remove_failed_qc3_and_generate_report:
 
 rule functional_normalize_rgset_to_methylset:
     input:
-        rgset=f'procdata/6_{analysis_name}_RGSet_qc3.qs'
+        rgset=f'procdata/6_{analysis_name}.RGChannelSet.qc3.qs'
     output:
-        methylset=f'procdata/7_{analysis_name}_methylset_raw.qs',
-        qc_report=f'qc/normalized/7_{analysis_name}_methylset_qc1.csv'    
+        methylset=f'procdata/7_{analysis_name}.MethylSet.funnorm.qs',
+        qc_report=f'qc/7_{analysis_name}.MethylSet.funnorm.qc_report.csv'
     shell:
         """
         Rscript scripts/7_functionalNormalizeAndQC.R \
@@ -224,12 +227,12 @@ rule functional_normalize_rgset_to_methylset:
 
 rule plot_normalized_vs_qc2_and_qc3:
     input:
-        rgset_qc2=f'procdata/5_{analysis_name}_RGSet_qc2.qs',
-        rgset_qc3=f'procdata/6_{analysis_name}_RGSet_qc3.qs',
-        normalized=f'procdata/7_{analysis_name}_methylset_raw.qs'
+        rgset_qc2=f'procdata/5_{analysis_name}.RGChannelSet.qc2.qs',
+        rgset_qc3=f'procdata/6_{analysis_name}.RGChannelSet.qc3.qs',
+        normalized=f'procdata/7_{analysis_name}.MethylSet.funnorm.qs'
     output:
-        plot1=f'qc/normalized/8_{analysis_name}_normalied_vs_unnormalized_QC2.pdf',
-        plot2=f'qc/normalized/8_{analysis_name}_normalied_vs_unnormalized_QC3.pdf'
+        plot1=f'qc/8_{analysis_name}.normalied_vs_unnormalized_QC2.pdf',
+        plot2=f'qc/8_{analysis_name}.normalied_vs_unnormalized_QC3.pdf'
     shell:
         """
         Rscript scripts/plotNormalizedVsQc2AndQc3.R \
@@ -243,10 +246,10 @@ rule plot_normalized_vs_qc2_and_qc3:
 
 rule convert_gmset_to_grset_and_drop_sex_chromosomes:
     input:
-        methylset=f'procdata/7_{analysis_name}_methylset_raw.qs'
+        methylset=f'procdata/7_{analysis_name}.MethylSet.funnorm.qs'
     output:
-        genomicmethylset=f'procdata/9_{analysis_name}_genomicmethylset.qs',
-        ratioset=f'procdata/9_{analysis_name}_genomicratioset_drop_sex_chr.qs'
+        genomicmethylset=f'procdata/9_{analysis_name}.GenomicMethylSet.qs',
+        ratioset=f'procdata/9_{analysis_name}.GenomicRatioSet.drop_sex_chr.qs'
     shell:
         """
         Rscript scripts/9_convertGMSetToGRSetAndDropSexChromosomes.R \
@@ -259,10 +262,10 @@ rule convert_gmset_to_grset_and_drop_sex_chromosomes:
 # ---- 10. Filter poor quality probes
 rule filter_grset_poor_quality_probes:
     input:
-        grset=f'procdata/9_{analysis_name}_genomicratioset_drop_sex_chr.qs',
-        pvalues=f'qc/prenormalization/6_{analysis_name}_qc3_detection_pvals.csv'
+        grset=f'procdata/9_{analysis_name}.GenomicRatioSet.drop_sex_chr.qs',
+        pvalues=f'qc/6_{analysis_name}.RGChannelSet.qc3.detection_pvals.csv'
     output:
-        filtered_grset=f'procdata/10_{analysis_name}_genomicratioset_drop_sex_filter_probes.qs'
+        filtered_grset=f'procdata/10_{analysis_name}.GenomicRatioSet.drop_sex_chr.filter_probes.qs'
     shell:
         """
         Rscript scripts/10_filterGRSetPoorQualityProbes.R \
@@ -276,9 +279,9 @@ rule filter_grset_poor_quality_probes:
 
 rule correct_grset_for_snps:
     input:
-        grset=f'procdata/10_{analysis_name}_genomicratioset_drop_sex_filter_probes.qs'
+        grset=f'procdata/10_{analysis_name}.GenomicRatioSet.drop_sex_chr.filter_probes.qs'
     output:
-        drop_snps_grset=f'procdata/11_{analysis_name}_genomicratioset_drop_sex_filter_probes_drop_snp.qs'
+        drop_snps_grset=f'procdata/11_{analysis_name}.GenomicRatioSet.drop_sex_chr.filter_probes.drop_snps.qs'
     shell:
         """
         Rscript scripts/11_correctGRSetForSNPs.R \
@@ -291,9 +294,9 @@ rule correct_grset_for_snps:
 
 rule correct_grset_for_crossreactive_probes:
     input:
-        grset=f'procdata/11_{analysis_name}_genomicratioset_drop_sex_filter_probes_drop_snp.qs'
+        grset=f'procdata/11_{analysis_name}.GenomicRatioSet.drop_sex_chr.filter_probes.drop_snps.qs'
     output:
-        drop_xreactive_grset=f'procdata/12_{analysis_name}_genomicratioset_drop_sex_filter_probes_drop_snp_xreactive.qs'
+        drop_xreactive_grset=f'procdata/12_{analysis_name}.GenomicRatioSet.drop_sex_chr.filter_probes.drop_snps.correct_xreactive.qs'
     shell:
         """
         Rscript scripts/12_correctGRSetForCrossReactiveProbes.R \
@@ -306,10 +309,11 @@ rule correct_grset_for_crossreactive_probes:
 
 rule subset_grset_by_cancer_types:
     input:
-        grset=f'procdata/12_{analysis_name}_genomicratioset_drop_sex_filter_probes_drop_snp_xreactive.qs'
+        grset=f'procdata/12_{analysis_name}.GenomicRatioSet.drop_sex_chr.filter_probes.drop_snps.correct_xreactive.qs'
     output:
-        grset=f'results/13_{analysis_name}_all_types_genomicratioset.qs',
-        grsets=expand('results/13_{analysis_name}_{cancer_type}_genomicratioset.qs', analysis_name=analysis_name, cancer_type=cancer_types)
+        grset=f'results/13_{analysis_name}.all_types.GenomicRatioSet.qs',
+        grsets=expand('results/13_{analysis_name}.{cancer_type}.GenomicRatioSet.qs', 
+                      analysis_name=analysis_name, cancer_type=cancer_types)
     shell:
         """
         Rscript scripts/13_subsetSamplesByCancerType.R \
@@ -317,3 +321,38 @@ rule subset_grset_by_cancer_types:
             -s '{cancer_types}' \
             -o '{output.grset} {output.grsets}'
         """
+
+
+# ---- 14. extract M and Beta values from each GenomicRatioSet for CpGs and Genomic Regions
+
+# rule extract_m_and_beta_values_and_collapse_adjacent_regions:
+#     input:
+#         grsets=[f'results/13_{analysis_name}.all_types.GenomicRatioSet.qs',
+#                 *expand('results/13_{analysis_name}.{cancer_type}.GenomicRatioSet.qs', 
+#                         analysis_name=analysis_name, cancer_type=cancer_types)]
+#     output:
+#         m_values=[f'results/14_{analysis_name}.all_types.m_values.csv',
+#                   *expand('results/14_{analysis_name}.{cancer_type}.m_values.csv',
+#                          analysis_name=analysis_name, cancer_type=cancer_types)],
+#         beta_values=[f'results/14_{analysis_name}.all_types.beta_values.csv',
+#                      *expand('results/14_{analysis_name}.{cancer_type}.beta_values.csv',
+#                              analysis_name=analysis_name, cancer_type=cancer_types)],
+#         grsets_collapsed=[f'results/14_{analysis_name}.all_types.GenomicRatioSet.collapsed.qs',
+#                           *expand('results/14_{analysis_name}.{cancer_type}.GenomicRatioSet.collapsed.qs', 
+#                                   analysis_name=analysis_name, cancer_type=cancer_types)]
+#         m_values_collapsed=[f'results/14_{analysis_name}.all_types.m_values_collapsed.csv',
+#                             *expand('results/14_{analysis_name}.{cancer_type}.m_values_collapsed.qs', 
+#                                     analysis_name=analysis_name, cancer_type=cancer_types)],
+#         beta_values_collapsed=[f'results/14_{analysis_name}.all_types.beta_values_collapsed.qs',
+#                                *expand('results/14_{analysis_name}.{cancer_type}.beta_values_collapsed.qs',
+#                                        analysis_name=analysis_name, cancer_type=cancer_types)]
+#     shell:
+#         """
+#         Rscript scripts/14_extractMandBetaValues.R \
+#             -g '{input.grsets}' \
+#             -s {cancer_types} \
+#             -b '{output.beta_values} \
+#             -c '{output.beta_values_collapsed}' \
+#             -m '{output.m_values}' \
+#             -n '{output.m_values_collapsed}'
+#         """
