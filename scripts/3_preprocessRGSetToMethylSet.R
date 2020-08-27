@@ -44,7 +44,7 @@ dev.off()
 
 
 # ---- 4. Write bad samples to qc directory
-meds <- (methylSetQC$mMed + methylSetQC$uMed)/2
+meds <- (methylSetQC$mMed + methylSetQC$uMed) / 2
 badSampleIdxs <- which(meds < 9)
 badSamples <- paste0("Bad sample idxs: ", paste0(badSampleIdxs, collapse=', '))
 message(badSamples)
