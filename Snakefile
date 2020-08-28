@@ -123,9 +123,10 @@ manual_qc_step_names = [re.sub(':.*$', '', step) for step in manual_qc_steps]
 
 manual_qc_file_name = f'procdata/4.{analysis_name}.RGChannelSet'
 manual_qc_file_names = []
+qc_steps3 = qc_steps2
 
 for step in manual_qc_step_names:
-    qc_steps3 = [*qc_steps2, step]
+    qc_steps3 = [*qc_steps3, step]
     manual_qc_step = '.'.join(qc_steps3)
     manual_qc_file_names = [*manual_qc_file_names, f'{manual_qc_file_name}.{manual_qc_step}.qs']
 
@@ -152,12 +153,12 @@ final_qc_step = '.'.join(qc_steps_final)
 
 rule drop_probes_with_less_than_three_beads:
     input:
-        rgset=f'4.{analysis_name}.RGChannelSet.{manual_qc_step}.qs'
+        rgset=f'procdata/4.{analysis_name}.RGChannelSet.{manual_qc_step}.qs'
     output:
-        f'5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
+        f'procdata/5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
     shell:
         """
-        Rscript scripts/5_dropProbesWithLessThanThreeBeads.R \
+        Rscript scripts/5_dropProbesWithLessThan3Beads.R \
             -r {input.rgset} \
             -o {output}
         """
