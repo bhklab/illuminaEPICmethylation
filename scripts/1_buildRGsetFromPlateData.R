@@ -56,7 +56,7 @@ labelledArrays <- mapply(FUN=.labelArray,  # Function to apply
 # ---- 3. Read data into RGChannelSet objects
 message("Building RGChannelSets from array data...\n")
 
-rgSets <- bplapply(labelledArrays, function(targets) read.metharray.exp(targets=targets))
+rgSets <- bplapply(labelledArrays, function(targets) read.metharray.exp(targets=targets, extended=TRUE))
 
 
 # --- 4. Annotate the RGChannelSet objects

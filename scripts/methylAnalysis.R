@@ -321,7 +321,7 @@ stanford_meth_rgSet_QC1 <- stanford_meth_rgSet[,
                                                ]
 
 stanford_meth_rgSet_QC1
-# class: RGChannelSetExtended 
+# class: RGChannelSetExtended
 # dim: 1051815 294 
 # metadata(0):
 #   assays(5): Green Red GreenSD RedSD NBeads

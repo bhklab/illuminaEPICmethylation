@@ -28,13 +28,13 @@
 import re
 
 ## TODO: Implement conda environment configuration from environment.yml
-## TODO: Implement check to see if packrat dependencies are available and install if not
+## TODO: Implement check to see if renv dependencies are available and install if not
 
 
 # ---- 0. Load analysis specific configuration files and assign to local variables
 configfile: 'config.yaml'
 
-# Unpack
+# Unpack config dictionary to local environment
 plate_data_dirs = config['plate_data_dirs']
 plate_labels = config['plate_labels']
 
@@ -42,9 +42,11 @@ nthread = config['nthread']
 
 analysis_name = config['analysis_name']
 
-failed_qc1=config['failed_qc1']
-failed_qc2=config['failed_qc2']
-failed_qc3=config['failed_qc3']
+detection_pvalue = config['detection_pvalue']
+
+bisulphite_conversion_rate = config['bisulphite_conversion_rate']
+
+manual_qc_steps = config['manual_qc_steps']
 
 cancer_types=config['cancer_types']
 
@@ -68,154 +70,104 @@ rule build_rgset_from_plate_data:
         """
 
 
-# ---- 2. Generate microarray QC report
+# ---- 2. Filter out samples with less than 90% CpG probes detected
 
-## JP: Interpretation of this qcReport file:
-## The densityPlot function produces density plots of the methylation Beta values for all
-## samples, typically colored by sample group. While the density plots in Figure 1 are useful
-## for identifying deviant samples, it is not easy to identify the specific problem sample. If
-## there is a concern about outlier samples, a useful follow-up is the “bean” plot (Figure 2)
-## that shows each sample in its own section. While the shape of the distribution for “good”
-## samples will differ from experiment to experiment, many conditions have methylation profiles
-## characterized by two modes - one with close to 0% methylation, and a second at close to
-## 100% methylation.
+qc_path1 = f'qc/2.{analysis_name}.RGChannelSet'
+qc_steps1 = [f'detectionP{detection_pvalue}']
+qc_step1 = qc_steps1[0]
 
-## Another QC plot recommended by the authors of minfi package
-## minfi provides a simple quality control plot that uses the log median intensity in both the
-## methylated (M) and unmethylated (U) channels. When plotting these two medians against
-## each other, it has been observed that good samples cluster together, while failed samples
-## tend to separate and have lower median intensities [1]. In general, we advice users to make
-## the plot and make a judgement. The line separating ”bad” from ”good” samples represent a
-## useful cutoff, which may have to be adapted to a specific dataset. 
-
-## We need to apply preprocessRaw() first to the dataset:
-## In order to obtain the methylated and unmethylated signals, we need to convert the RGChannelSet to an object containing 
-## the methylated and unmethylated signals using the function preprocessRaw. 
-## It takes as input a RGChannelSet and converts the red and green intensities to methylated and unmethylated signals 
-## according to the special 450K probe design, and returns the converted signals in a new object of class MethylSet. 
-## It does not perform any normalization.
-
-rule generate_microarray_qc_report:
+rule drop_samples_less_than_90pct_probes_detected:
     input:
         rgset=f'procdata/1.{analysis_name}.RGChannelSet.qs'
     output:
-        detection_pvals=f'qc/2.{analysis_name}.RGChannelSet.detection_pvals.csv',
-        sample_qc=f'qc/2.{analysis_name}.RGChannelSet.probes_failed_per_sample_p0.01.csv',
-        probe_qc=f'qc/2.{analysis_name}.RGChannelSet.num_probes_with_proportion_failed_samples.csv',
-        qc_report=f'qc/2.{analysis_name}.RGChannelSet.minfi_qc_report.pdf'
-    threads: nthread
+        detectionPvalues=f'{qc_path1}.detection_pvalues.csv',
+        probeQC=f'{qc_path1}.num_probes_with_proportion_failed_samples_p{detection_pvalue}.csv',
+        sampleQC=f'{qc_path1}.probes_failed_per_sample_p{detection_pvalue}.csv',
+        rgset_filtered=f'procdata/2.{analysis_name}.RGChannelSet.{qc_step1}.qs'
     shell:
         """
-        Rscript scripts/2_generateMicroarrayQCReport.R \
-            -i {input.rgset} -d {output.detection_pvals} \
-            -p {output.probe_qc} \
-            -s {output.sample_qc} \
-            -r {output.qc_report}
+        Rscript scripts/2_dropSamplesLessThan90PctProbesDetected.R \
+            -r {input.rgset} \
+            -p {detection_pvalue} \
+            -P {qc_path1} \
+            -o {output.rgset_filtered}
         """
 
 
-# ---- 3. Preprocess microarray intensities to methylation values
+# ---- 3. Filter out samples with bisulphite conversion rate lower than specified in 'config.yml'
 
-rule convert_rgset_to_methylset_for_qc:
+qc_path2 = f'qc/3.{analysis_name}.RGChannelSet'
+qc_steps2 = [*qc_steps1, f'bisulphite{bisulphite_conversion_rate}']
+qc_step2 = '.'.join(qc_steps2)
+
+rule drop_samples_with_bisulphite_conversion_less_than_cutoff:
     input:
-        rgset=f'procdata/1.{analysis_name}.RGChannelSet.qs'
+        rgset=f'procdata/2.{analysis_name}.RGChannelSet.{qc_step1}.qs'
     output:
-        qc_figures=f'qc/methylSet/3.{analysis_name}.MethylSet.qc_plots.pdf',
-        methylset=f'procdata/3.{analysis_name}.MethylSet.qs'
-    threads: nthread
+        bisulphite_conversion=f'{qc_path2}.bisulphite_conversions.csv',
+        rgset_filtered=f'procdata/3.{analysis_name}.RGChannelSet.{qc_step2}.qs'
     shell:
         """
-        Rscript scripts/preprocessRGSetToMethylSet.R \
-            -i {input.rgset} \
-            -f {output.qc_figures} \
-            -o {output.methylset}
+        Rscript scripts/3_dropSamplesBisulfiteConversionLessThanCutoff.R\
+            -r {input.rgset} \
+            -c {bisulphite_conversion_rate} \
+            -P {qc_path2} \
+            -o {output.rgset_filtered}
         """
 
-## NOTE: The manual QC steps below are specific to this analysis, it  is likely we can 
-##  reduce these three steps to a single step wherein a user specifies ALL plate-well
-##  combinations which fail manual QC.
 
-## FIXME: How can I reuse a rule with different outputs?
-## TODO: Determine if we can automate any manual QC steps
+# ---- 4. Filter out samples failing one or more manual QC steps specified in 'config.yml'
 
-# ---- 4. Pre-normalization manual QC1
+# Build manual qc output file names
+manual_qc_step_names = [re.sub(':.*$', '', step) for step in manual_qc_steps]
 
-## Outlier samples with low signal from methylated and unmethylated channels, 
-## low values of control probes and poor density plots: Removed 15 samples that 
-## failed at least two different QC metrics
+manual_qc_file_name = f'procdata/4.{analysis_name}.RGChannelSet'
+manual_qc_file_names = []
 
-rule remove_failed_qc1_and_generate_report:
+for step in manual_qc_step_names:
+    qc_steps3 = [*qc_steps2, step]
+    manual_qc_step = '.'.join(qc_steps3)
+    manual_qc_file_names = [*manual_qc_file_names, f'{manual_qc_file_name}.{manual_qc_step}.qs']
+
+qc_step_num = 1 + len(manual_qc_step_names) 
+
+rule drop_samples_failed_manual_qc:
     input:
-        rgset=f'procdata/1.{analysis_name}.RGChannelSet.qs'
+        rgset=f'procdata/3.{analysis_name}.RGChannelSet.{qc_step2}.qs'
     output:
-        rgset_qc=f'procdata/4.{analysis_name}.RGChannelSet.qc1.qs',
-        detection_pvals=f'qc/4.{analysis_name}.RGChannlSet.qc1.detection_pvals.csv',
-        sample_qc=f'qc/4.{analysis_name}.RGChannelSet.qc1.probes_failed_per_sample_p0.01.csv',
-        probe_qc=f'qc/4.{analysis_name}.RGChannelSet.qc1.num_probes_with_proportion_failed_samples.csv'
-    threads: nthread
+        manual_qc_file_names
     shell:
         """
-        Rscript scripts/4_5_6_removeFailedQCandGenerateReport.R \
-            -i {input.rgset} \
-            -f '{failed_qc1}' \
-            -d {output.detection_pvals} \
-            -p {output.probe_qc} \
-            -s {output.sample_qc} \
-            -o {output.rgset_qc}
+        Rscript scripts/4_dropSamplesFailedManualQC.R \
+            -r {input.rgset} \
+            -q '{manual_qc_steps}' \
+            -o '{output}'
         """
 
 
-# ---- 5. Pre-normalization manual QC2
+# ---- 5. Filter out probes with less than 3 beads
 
-rule remove_failed_qc2_and_generate_report:
+qc_steps_final = [*qc_steps3, 'probesGt3Beads']
+final_qc_step = '.'.join(qc_steps_final)
+
+rule drop_probes_with_less_than_three_beads:
     input:
-        rgset=f'procdata/4.{analysis_name}.RGChannelSet.qc1.qs'
+        rgset=f'4.{analysis_name}.RGChannelSet.{manual_qc_step}.qs'
     output:
-        rgset_qc2=f'procdata/5.{analysis_name}.RGChannelSet.qc2.qs',
-        detection_pvals=f'qc/5.{analysis_name}.RGChannelSet.qc2.detection_pvals.csv',
-        sample_qc=f'qc/5.{analysis_name}.RGChanneLSset.qc2.probes_failed_per_sample_p0.01.csv',
-        probe_qc=f'qc/5.{analysis_name}.RGChannelSet.qc2.num_probes_with_proportion_failed_samples.csv'
-    threads: nthread    
+        f'5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
     shell:
         """
-        Rscript scripts/4_5_6_removeFailedQCandGenerateReport.R \
-            -i {input.rgset} \
-            -f '{failed_qc2}' \
-            -d {output.detection_pvals} \
-            -p {output.probe_qc} \
-            -s {output.sample_qc} \
-            -o {output.rgset_qc2}
+        Rscript scripts/5_dropProbesWithLessThanThreeBeads.R \
+            -r {input.rgset} \
+            -o {output}
         """
 
 
-# ---- 6. Pre-normalization manual QC3
-
-rule remove_failed_qc3_and_generate_report:
-    input:
-        rgset=f'procdata/5.{analysis_name}.RGChannelSet.qc2.qs'
-    output:
-        rgset_qc3=f'procdata/6.{analysis_name}.RGChannelSet.qc3.qs',
-        detection_pvals=f'qc/6.{analysis_name}.RGChannelSet.qc3.detection_pvals.csv',
-        sample_qc=f'qc/6.{analysis_name}.RGChannelSet.qc3.probes_failed_per_sample_p0.01.csv',
-        probe_qc=f'qc/6.{analysis_name}.RGChannelSet.qc3.num_probes_with_proportion_failed_samples.csv'
-    threads: nthread
-    shell:
-        """
-        Rscript scripts/4_5_6_removeFailedQCandGenerateReport.R \
-            -i {input.rgset} \
-            -f '{failed_qc3}' \
-            -d {output.detection_pvals} \
-            -p {output.probe_qc} \
-            -s {output.sample_qc} \
-            -o {output.rgset_qc3}
-        """
-
-
-# ---- 7. Functional normalize RGSet
+# ---- 6. Functional normalize RGChannelSet to MethylSet
 
 rule functional_normalize_rgset_to_methylset:
     input:
-        rgset=f'procdata/6.{analysis_name}.RGChannelSet.qc3.qs'
+        rgset=f'procdata/6.{analysis_name}.RGChannelSet.{manual_qc_steps}.qs'
     output:
         methylset=f'procdata/7.{analysis_name}.MethylSet.funnorm.qs',
         qc_report=f'qc/7.{analysis_name}.MethylSet.funnorm.qc_report.csv'
@@ -229,23 +181,21 @@ rule functional_normalize_rgset_to_methylset:
         """
 
 
-# ---- 8. Visualize normalied data vs QC2 and QC3 unnormalized data
+# ---- 7. Visualize normalized vs unnormalized beta value distribution
 
-rule plot_normalized_vs_qc2_and_qc3:
+rule plot_normalized_vs_2_previous_qc_steps:
     input:
-        rgset_qc2=f'procdata/5.{analysis_name}.RGChannelSet.qc2.qs',
-        rgset_qc3=f'procdata/6.{analysis_name}.RGChannelSet.qc3.qs',
-        normalized=f'procdata/7.{analysis_name}.MethylSet.funnorm.qs'
+        rgset=f'procdata/4.{analysis_name}.RGChannelSet.{final_qc_step}.qs',
+        normalized=f'procdata/5.{analysis_name}.MethylSet.funnorm.qs'
     output:
-        plot1=f'qc/8.{analysis_name}.qc2.normalied_vs_unnormalized_plot.pdf',
-        plot2=f'qc/8.{analysis_name}.qc3.normalied_vs_unnormalized_plot.pdf'
+        plot=f'qc/6.{analysis_name}.RGChannelSet.{final_qc_step}.vs_normalized_plot.pdf',
     threads: nthread
     shell:
         """
-        Rscript scripts/8_plotNormalizedVsQc2AndQc3.R \
-            -q '{input.rgset_qc2} {input.rgset_qc3}' \
+        Rscript scripts/6_normalizedVs2PreviousQCSteps.R \
+            -q {input.rgset} \
             -n {input.normalized} \
-            -o '{output.plot1} {output.plot2}'
+            -o {output.plot}
         """
 
 
@@ -345,7 +295,7 @@ rule extract_m_and_beta_values:
                       analysis_name=analysis_name, cancer_type=cancer_types)
     output:
         m_values=expand('results/14.{analysis_name}.{cancer_type}.m_values.csv',
-                         analysis_name=analysis_name, cancer_type=cancer_types)
+                         analysis_name=analysis_name, cancer_type=cancer_types),
         beta_values=expand('results/14.{analysis_name}.{cancer_type}.beta_values.csv',
                            analysis_name=analysis_name, cancer_type=cancer_types)
     threads: nthread
@@ -387,11 +337,11 @@ rule build_region_mappings_for_beta_and_m_values:
         grsets=expand('results/15.{analysis_name}.{cancer_type}.GenomicRatioSet.{methylation_values}.regions.qs',
             analysis_name=analysis_name, cancer_type=cancer_types, methylation_values=methylation_values),
         methylation_data=expand('results/15.{analysis_name}.{cancer_type}.GenomicRatioSet.{methylation_values}.regions.qs',
-            analysis_name=analysis_name, cancer_type=cancer_types, methylation_values=methylation_values)
+            analysis_name=analysis_name, cancer_type=cancer_types, methylation_values=methylation_values),
         methylation_values=methylation_values
     output:
         mappings=expand('results/16.{analysis_name}.{cancer_type}.{methylation_value}.region_to_cpg_mappings.csv', 
-                        analysis_name=analysis_name, cancer_type=cancer_types, methylation_value=methylation_values)
+                        analysis_name=analysis_name, cancer_type=cancer_types, methylation_value=methylation_values),
         methyl_values=expand('results/16.{analysis_name}.{cancer_type}.{methylation_value}.regions.csv', 
                              analysis_name=analysis_name, cancer_type=cancer_types, methylation_value=methylation_values)
     threads: nthread

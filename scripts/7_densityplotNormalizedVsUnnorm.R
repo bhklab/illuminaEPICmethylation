@@ -7,7 +7,8 @@ library(qs, quietly=TRUE)
 # ---- 0. Parse CLI arguments
 option_list <- list(
     make_option(c('-q', '--qualityControl'), 
-        help=c("Path to the file containing the RGChannelSet from manual QC step 2."), 
+        help=c("Paths to the files containing the RGChannelSets from the two quality 
+               control steps preceeding normalization."), 
         type="character"),
     make_option(c('-n', '--normalized'), 
         help=c("Path to the GenomicMethylSet containging the normalzied output from QC step 3."), 

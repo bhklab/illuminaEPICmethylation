@@ -12,24 +12,21 @@ nthread: 20
 
 analysis_name: 'van_de_rijn'
 
-# Each item is for the corresponding plate
-failed_qc1:
-    - 'A7,B5,D2'
-    - 'D5,D6,F5,F6,G6'
-    - 'C7,E6'
+# Set the p-value cut-off for calling CpG probes as detected
+detection_pvalue: 0.05
 
-failed_qc2:
-    - 'D1,C2,E2,H2,H3,A4,H5,A6,G7,E10,H10,B11,G11'
-    - 'C2,D2,D3,H4,H5,E8,E10'
-    - 'D2,E2,H4,A4,C8,B10,A12'
-    - 'B1'
+# Set the minimum bisulphite conversion rate for a sample to pass QC
+bisulphite_conversion_rate: 90
 
-failed_qc3:
-    - 'B2,D5,F9,A1,C4,E8,G11'
-    - 'F3,E6,C8,A12,E4,D7,B11'
-    - 'B7,H2,G3,D5,A6,B9,A10'
-    - 'A1'
- 
+# Specify iterative steps of manual QC, where the step name is first followed by a colon, 
+#   then a comma separated list of wells for plate 1, then a colon, a comma separated list of wells
+#   for plate 2, etc.
+manual_qc_steps:
+    - 'logMU9:H3'
+    - 'noJurkat:B3,D5,F9,A1,C4,E8,G11;F3,E6,C8,A12,E4,D7,B11;B7;A1'
+    - 'noReplicates:B1,C8,F6;A6,E7,E11'
+    - 'DTFunique:E3,E4,E6,D7,B9,A10;E1,F2,G3,B4,F4,B5,A8,A9,D9,E9,C10,D10,H10,C11,H11,B12,D12,H12;G1,F4,G4,H4,A5,A7,E7,F7,A8,E8,B12'
+
 # Regex columns based on these strings
 # NOTE: underscores get substituted to spaces inside the R script
 cancer_types:
