@@ -155,12 +155,14 @@ rule drop_probes_with_less_than_three_beads:
     input:
         rgset=f'procdata/4.{analysis_name}.RGChannelSet.{manual_qc_step}.qs'
     output:
-        f'procdata/5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
+        bead_counts=f'qc/5.{analysis_name}.RGChannelSet.{manual_qc_step}.bead_counts.csv',
+        rgset_filtered=f'procdata/5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
     shell:
         """
         Rscript scripts/5_dropProbesWithLessThan3Beads.R \
             -r {input.rgset} \
-            -o {output}
+            -b {output.bead_counts} \
+            -o {output.rgset_filtered}
         """
 
 

@@ -825,7 +825,13 @@ beadc(beadcount_matrix)
 
 # Filter out probes with bead counts < 3 in at least one sample (>0.52% of samples, 1/194 = 0.00515)
 # Set up p value filters in a way that there is no filtering done at this stage - it will be done after normalization
-stanford_meth_rgSet_QC8 <- pfilter(mn = stanford_meth_rgSet_QC7, un = stanford_meth_rgSet_QC7, bc = beadcount_matrix, perCount = 0.52, perc = 10.1, pthresh = 100, logical.return=TRUE)
+stanford_meth_rgSet_QC8 <- pfilter(mn = stanford_meth_rgSet_QC7, 
+                                 un = stanford_meth_rgSet_QC7, 
+                                 bc = beadcount_matrix, 
+                                 perCount = 0.52, 
+                                 perc = 10.1, 
+                                 pthresh = 100, 
+                                 logical.return=TRUE)
 # 0 samples having 10.1 % of sites with a detection p-value greater than 0.05 were removed 
 # Samples removed:  
 #   50653 sites were removed as beadcount <3 in 0.52 % of samples 
