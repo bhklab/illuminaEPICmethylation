@@ -27,6 +27,12 @@ manual_qc_steps:
     - 'noReplicates:B1,C8,F6;A6,E7,E11'
     - 'DTFunique:E3,E4,E6,D7,B9,A10;E1,F2,G3,B4,F4,B5,A8,A9,D9,E9,C10,D10,H10,C11,H11,B12,D12,H12;G1,F4,G4,H4,A5,A7,E7,F7,A8,E8,B12'
 
+preprocess_method: 'Funnorm'
+
+# Same as previous manual QC steps, except on the preprocessed/normalized methylSet
+manual_qc2_steps:
+    - 'none:'
+
 # Regex columns based on these strings
 # NOTE: underscores get substituted to spaces inside the R script
 cancer_types:

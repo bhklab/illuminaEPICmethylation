@@ -48,6 +48,10 @@ bisulphite_conversion_rate = config['bisulphite_conversion_rate']
 
 manual_qc_steps = config['manual_qc_steps']
 
+preprocess_method = config['preprocess_method']
+
+manual_qc2_steps = config['manual_qc2_steps']
+
 cancer_types=config['cancer_types']
 
 
@@ -167,17 +171,18 @@ rule drop_probes_with_less_than_three_beads:
 
 
 # ---- 6. Functional normalize RGChannelSet to MethylSet
-rule functional_normalize_rgset_to_methylset:
+rule preprocess_to_methylset_and_qc:
     input:
         rgset=f'procdata/5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
     output:
-        methylset=f'procdata/7.{analysis_name}.MethylSet.funnorm.qs',
-        qc_report=f'qc/7.{analysis_name}.MethylSet.funnorm.qc_report.csv'
+        methylset=f'procdata/6.{analysis_name}.MethylSet.{preprocess_method}.qs',
+        qc_report=f'qc/6.{analysis_name}.MethylSet.{preprocess_method}.qc_report.csv'
     threads: nthread
     shell:
         """
-        Rscript scripts/6_functionalNormalizeAndQC.R \
+        Rscript scripts/6_preprocessToMethylSetAndQC.R \
             -i {input.rgset} \
+            -m {preprocess_method} \
             -o {output.methylset} \
             -r {output.qc_report}
         """
@@ -185,7 +190,7 @@ rule functional_normalize_rgset_to_methylset:
 
 # ---- 7. Visualize normalized vs unnormalized beta value distribution
 
-rule plot_normalized_vs_2_previous_qc_steps:
+rule plot_normalized_vs_two_previous_qc_steps:
     input:
         rgset=f'procdata/4.{analysis_name}.RGChannelSet.{final_qc_step}.qs',
         normalized=f'procdata/5.{analysis_name}.MethylSet.funnorm.qs'

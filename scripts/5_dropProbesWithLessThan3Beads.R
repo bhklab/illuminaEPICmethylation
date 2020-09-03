@@ -41,7 +41,6 @@ message('Saving bead counts to: ', opt$bead_counts, '...\n')
 beadCountDT <- data.table(beadCountMatrix, keep.rownames='rownames')
 fwrite(beadCountDT, file=opt$bead_counts)
 
-
 message("Filtering RGChannelSet to probes with more than three beads...\n")
 perCount <- 1 / ncol(rgSet)
 
