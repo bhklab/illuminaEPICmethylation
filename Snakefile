@@ -167,17 +167,16 @@ rule drop_probes_with_less_than_three_beads:
 
 
 # ---- 6. Functional normalize RGChannelSet to MethylSet
-
 rule functional_normalize_rgset_to_methylset:
     input:
-        rgset=f'procdata/6.{analysis_name}.RGChannelSet.{manual_qc_steps}.qs'
+        rgset=f'procdata/5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
     output:
         methylset=f'procdata/7.{analysis_name}.MethylSet.funnorm.qs',
         qc_report=f'qc/7.{analysis_name}.MethylSet.funnorm.qc_report.csv'
     threads: nthread
     shell:
         """
-        Rscript scripts/7_functionalNormalizeAndQC.R \
+        Rscript scripts/6_functionalNormalizeAndQC.R \
             -i {input.rgset} \
             -o {output.methylset} \
             -r {output.qc_report}

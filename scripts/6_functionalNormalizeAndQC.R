@@ -1,16 +1,21 @@
-library(minfi, quietly=TRUE)
-library(optparse, quietly=TRUE)
-library(IlluminaHumanMethylationEPICmanifest, quietly=TRUE)
-library(IlluminaHumanMethylationEPICanno.ilm10b4.hg19, quietly=TRUE)
-library(BiocParallel, quietly=TRUE)
-library(qs, quietly=TRUE)
+# ---- 0. Load dependencies
+message('Loading script dependencies...\n')
+
+# Suppress package load messages to ensure logs are not cluttered
+suppressMessages({
+    library(minfi, quietly=TRUE)
+    library(data.table, quietly=TRUE)
+    library(qs, quietly=TRUE)
+    library(optparse, quietly=TRUE)
+    library(wateRmelon, quietly=TRUE)
+})
 
 
 # ---- 0. Parse CLI arguments
 
 option_list <- list(
     make_option(c('-i', '--input'),
-        help=c("A comma separated list of paths to the directory for each microarray plate."),
+        help=c("Path to the quality controlled RGChannelSet object."),
         type="character"),
     make_option(c('-o', '--output'),
         help=c("Path to save the resulting methylSet to."),
