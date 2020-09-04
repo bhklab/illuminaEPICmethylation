@@ -177,22 +177,26 @@ rule preprocess_to_methylset_and_qc:
         """
 
 
-# ---- 7. Visualize normalized vs unnormalized beta value distribution
+# ---- 7. Visual the Raw RGSet vs Each Preprocessing Method with QC Metrics
 
-rule plot_normalized_vs_two_previous_qc_steps:
+preprocess_string = '_vs_'.join(preprocess_methods)
+comparisons = f'rgSet_vs_{preprocess_string}'
+
+rule density_plot_preprocessed_vs_rgset:
     input:
-        rgset=f'procdata/4.{analysis_name}.RGChannelSet.{final_qc_step}.qs',
-        normalized=expand('procdata/5.{analysis_name}.MethylSet.{preprocess_method}.qs',
-            analysis_name=analysis_name, preprocess_method=preprocess_methods)
+        methylsets=expand('procdata/6.{analysis_name}.MethylSet.{preprocess_method}.qs',
+            analysis_name=analysis_name, preprocess_method=preprocess_methods),
+        rgset=f'procdata/5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
     output:
-        plot=f'qc/6.{analysis_name}.RGChannelSet.{final_qc_step}.vs_normalized_plot.pdf',
+        plots=f'qc/7.{analysis_name}.{comparisons}.density_plots.pdf'
     threads: nthread
     shell:
         """
-        Rscript scripts/6_normalizedVs2PreviousQCSteps.R \
-            -q {input.rgset} \
-            -n {input.normalized} \
-            -o {output.plot}
+        Rscript scripts/7_densityPlotPreprocessedVsRGSet.R \
+            -m '{input.methylsets}' \
+            -r {input.rgset} \
+            -o '{output.plots}' \
+            -t '{preprocess_methods}'
         """
 
 
