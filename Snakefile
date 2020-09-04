@@ -10,21 +10,6 @@
 #
 ###
 
-###########
-# Current unknowns/challenges:
-#
-# - Determine how to adjust for DNA degradation from FFPE samples
-#   - Has this already been accounted for in the experimental pipeline?
-#   - What further steps should be taken?
-#
-# - What is the best per feature metric to compare in Similarity Network Fusion analysis?
-#   - Current assumption is to use genomic regions, as they may be more biologically interpretable
-#
-# - Sex chromosomes are usually the largest source of variation in methylation analysis
-#   - Current assumption is to remove sex chromosomes
-#
-###########
-
 import re
 
 ## TODO: Implement conda environment configuration from environment.yml
@@ -48,7 +33,7 @@ bisulphite_conversion_rate = config['bisulphite_conversion_rate']
 
 manual_qc_steps = config['manual_qc_steps']
 
-preprocess_method = config['preprocess_method']
+preprocess_methods = config['preprocess_methods']
 
 manual_qc2_steps = config['manual_qc2_steps']
 
@@ -171,20 +156,24 @@ rule drop_probes_with_less_than_three_beads:
 
 
 # ---- 6. Functional normalize RGChannelSet to MethylSet
+preprocess_methods = preprocess_methods.split(',')
+
 rule preprocess_to_methylset_and_qc:
     input:
         rgset=f'procdata/5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
     output:
-        methylset=f'procdata/6.{analysis_name}.MethylSet.{preprocess_method}.qs',
-        qc_report=f'qc/6.{analysis_name}.MethylSet.{preprocess_method}.qc_report.csv'
+        methylsets=expand('procdata/6.{analysis_name}.MethylSet.{preprocess_method}.qs',
+            analysis_name=analysis_name, preprocess_method=preprocess_methods),
+        qc_reports=expand('qc/6.{analysis_name}.MethylSet.{preprocess_method}.qc_report.csv',
+            analysis_name=analysis_name, preprocess_method=preprocess_methods)
     threads: nthread
     shell:
         """
         Rscript scripts/6_preprocessToMethylSetAndQC.R \
             -i {input.rgset} \
-            -m {preprocess_method} \
-            -o {output.methylset} \
-            -r {output.qc_report}
+            -m '{preprocess_methods}' \
+            -o '{output.methylsets}' \
+            -r '{output.qc_reports}'
         """
 
 
@@ -193,7 +182,8 @@ rule preprocess_to_methylset_and_qc:
 rule plot_normalized_vs_two_previous_qc_steps:
     input:
         rgset=f'procdata/4.{analysis_name}.RGChannelSet.{final_qc_step}.qs',
-        normalized=f'procdata/5.{analysis_name}.MethylSet.funnorm.qs'
+        normalized=expand('procdata/5.{analysis_name}.MethylSet.{preprocess_method}.qs',
+            analysis_name=analysis_name, preprocess_method=preprocess_methods)
     output:
         plot=f'qc/6.{analysis_name}.RGChannelSet.{final_qc_step}.vs_normalized_plot.pdf',
     threads: nthread
