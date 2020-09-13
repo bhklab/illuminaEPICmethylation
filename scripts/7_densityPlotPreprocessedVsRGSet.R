@@ -6,6 +6,11 @@ suppressMessages({
     library(minfi, quietly=TRUE)
     library(qs, quietly=TRUE)
     library(optparse, quietly=TRUE)
+    library(BiocParallel, quietly=TRUE)
+    library(data.table, quietly=TRUE)
+    library(ggplot2, quietly=TRUE)
+    library(gridExtra, quietly=TRUE)
+    library(grid, quietly=TRUE)
 })
 
 # ---- 0. Parse CLI arguments
@@ -35,10 +40,11 @@ plotTitles <- c('Unprocessed', unlist(strsplit(opt$titles, split=' ')))
 message("Reading in data from:\n\t", 
         paste0(opt$rgset, '\n\t', paste0(methylSetPaths, collapse='\n\t'), '\n'))
 
-methylSets <- lapply(methylSetPaths, qread)
-rgSet <- qread(opt$rgset)
+methylSets <- bplapply(methylSetPaths, qread, nthreads=4)
+rgSet <- qread(opt$rgset, nthreads=20)
 
 plotSets <- c(list(rgSet), methylSets)
+rm(methylSets); rm(rgSet); gc()
 
 # ---- 2. Define QC Functions
 
@@ -62,9 +68,14 @@ diffMethylVsUnmethylPeaks <- function(betaValues) {
     # Get the peak of methylated vs unmethylated signal
     methylatedPeak <- densityBetas[whichMaxMethylated]
     unmethylatedPeak <- densityBetas[whichMaxUnmethylated]
-
-    peakDifference <- methylatedPeak - unmethylatedPeak
-    return(peakDifference)
+    
+    .countPeaks <- function(density) sum(diff(sign(diff(density))) == -2)
+    
+    numPeaks <- .countPeaks(densityValues)
+    
+    peakDifference <- round(methylatedPeak - unmethylatedPeak, 2)
+    
+    return(list('peakDiff'=peakDifference, 'numPeaks'=numPeaks))
 }
 
 calcMethylSignalOverNoise <- function(betaValues) {
@@ -77,11 +88,11 @@ calcMethylSignalOverNoise <- function(betaValues) {
     noiseAUC <- sum(betaValues < 0.75 & betaValues > 0.25)
     unmethylAUC <- sum(betaValues <= 0.25)
 
-    signalOverNoise <- (methylAUC + unmethylAUC) / noiseAUC
+    signalOverNoise <- round((methylAUC + unmethylAUC) / noiseAUC, 2)
     return(signalOverNoise)
 }
 
-# ---- 3. Calculate QC Metrics and Density Plot All Preprocess Methods for Each Sample
+# ---- 3. Calculate QC Metrics and Build a DataTable
 
 # Write functions to apply over each betaValue matrix
 .sampleMethylVsUnmethylPeaks <- function(betaMatrix) {
@@ -94,36 +105,87 @@ calcMethylSignalOverNoise <- function(betaValues) {
 
 message("Extracting beta value matrices...\n")
 # NOTE: This assumes the same samples for all plotSets
-sampleNames <- colnames(plotSets[[1]])
+sampleNames <- make.names(colnames(plotSets[[1]]))
 
 
 .getBetaNaOmit <- function(methylSet) na.omit(getBeta(methylSet))
-betaMatrixList <- lapply(plotSets, FUN=.getBetaNaOmit)
+betaMatrixList <- bplapply(plotSets, FUN=.getBetaNaOmit)
+rm(plotSets); gc()
 
 message("Calculating QC metrics...\n")
-peakDifferences <- lapply(betaMatrixList, FUN=.sampleMethylVsUnmethylPeaks)
-aucRatios <- lapply(betaMatrixList, FUN=.sampleMethylSignalOverNosie)
+peakStats <- bplapply(betaMatrixList, FUN=.sampleMethylVsUnmethylPeaks)
 
-numRows <- ceiling(length(plotSets) / 2)
+.getPeakStat <- function(peakStats, statName) lapply(peakStats, `[[`, statName)
 
-message(paste0("Writing plots to:\n\t", opt$output))
-pdf(opt$output)
+peakDifferences <- bplapply(peakStats, FUN=.getPeakStat, statName='peakDiff')
+numPeaks <- bplapply(peakStats, FUN=.getPeakStat, statName='numPeaks')
+
+aucRatios <- bplapply(betaMatrixList, FUN=.sampleMethylSignalOverNosie)
+
+betaStatsDTs <- vector(mode='list', length=length(peakDifferences)) 
+for (methodIdx in seq_along(peakDifferences)) {
+    betaStatsDTs[[methodIdx]] <- data.table(
+        'sample'=sampleNames,
+        'peakDiff'=unlist(peakDifferences[[methodIdx]]),
+        'numPeaks'=unlist(numPeaks[[methodIdx]]),
+        'aucRatio'=unlist(aucRatios[[methodIdx]])
+    )
+}
+names(betaStatsDTs) <- plotTitles
+statsDT <- rbindlist(betaStatsDTs, idcol='preprocMethod')
+rm(betaStatsDTs); gc()
+
+# ---- 4. Assemble DataTable of Beta Values for Plotting
+
+message('Building data.table object for plotting...\n')
+
+betaDTList <- bplapply(betaMatrixList, as.data.table)
+names(betaDTList) <- plotTitles
+rm(betaMatrixList); gc()
+
+.renameColumnsMakeNames <- function(DT) { 
+    colnames(DT) <- make.names(colnames(DT)); return(DT)
+}
+betaDTList <- lapply(betaDTList, FUN=.renameColumnsMakeNames)
+
+# ----- 5. Rendering Plots and Writing to PDF 
+message(paste0("Writing plots to:\n\t", opt$output, '\n'))
+
+.ggplotDensity <- function(DT, sampleName, plotTitle) {
+    ggplotGrob(
+        ggplot(data=DT, aes_string(sampleName)) +
+            geom_density() + ggtitle(plotTitle) + xlab('Beta Values') +
+            ylab("Density") + theme(plot.title=element_text(hjust=0.5))
+    )
+}
+
+.densityPlotSample <- function(sampleName, betaDTList, plotTitles, statsDT) {
+    message(paste0("Plotting: ", sampleName))
+    
+    grobs <- mapply(FUN=.ggplotDensity,
+                    DT=betaDTList,
+                    plotTitle=plotTitles,
+                    MoreArgs=list('sampleName'=sampleName),
+                    SIMPLIFY=FALSE)
+    
+    stats <- tableGrob(statsDT[sample == sampleName, -'sample'])
+    
+    allGrobs <- c(grobs, list(stats))
+    return(allGrobs)
+}
+
+pdfGrobs <- lapply(sampleNames,
+                     FUN=.densityPlotSample, 
+                     betaDTList=betaDTList,
+                     plotTitles=plotTitles,
+                     statsDT=statsDT)
+
+pdf(opt$output, height=11, width=8.5)
 
 for (sampleIdx in seq_along(sampleNames)) {
-    
-    message(paste0('Plotting: ', sampleNames[sampleIdx]))
-    print(sampleNames[sampleIdx])
-    plot.new()
-    par(mfrow=c(numRows, 2))
-    
-    for (plotIdx in seq_along(plotSets)) {
-        plot(density(betaMatrixList[[plotIdx]][, sampleIdx]),
-             title=plotTitles[plotIdx])
-        mtext(paste0('Peak Diff: ', peakDifferences[[plotIdx]][sampleIdx]), 
-              side=4, line=0)
-        mtext(paste0('AUC Ratio: ', aucRatios[[plotIdx]][sampleIdx]),
-              side=4, line=1)
-    }
+    message(paste0('Writing ', sampleNames[sampleIdx], ' to pdf...'))
+    title <- textGrob(sampleNames[sampleIdx], gp=gpar(fontsize=16, fontface='bold'))
+    grid.arrange(grobs=pdfGrobs[[sampleIdx]], top=title)
 }
 
 dev.off()

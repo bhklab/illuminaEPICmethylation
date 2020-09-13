@@ -29,6 +29,8 @@ manual_qc_steps:
 
 preprocess_methods: 'Funnorm,Illumina,Noob,SWAN'
 
+selected_preprocess_method: 'SWAN'
+
 # Same as previous manual QC steps, except on the preprocessed/normalized methylSet
 manual_qc2_steps:
     - 'none:'

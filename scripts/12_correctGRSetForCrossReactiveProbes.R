@@ -1,8 +1,13 @@
-library(minfi, quietly=TRUE)
-library(optparse, quietly=TRUE)
-library(maxprobes, quietly=TRUE)
-library(qs, quietly=TRUE)
+# ---- 0. Load dependencies
+message("Loading script dependencies...\n")
 
+# Suppress package load messages to ensure logs are not cluttered
+suppressMessages({
+    library(minfi, quietly=TRUE)
+    library(data.table, quietly=TRUE)
+    library(qs, quietly=TRUE)
+    library(optparse, quietly=TRUE)
+})
 
 # ---- 0. Parse CLI arguments
 

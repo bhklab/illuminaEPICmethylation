@@ -31,14 +31,6 @@ detection_pvalue = config['detection_pvalue']
 
 bisulphite_conversion_rate = config['bisulphite_conversion_rate']
 
-manual_qc_steps = config['manual_qc_steps']
-
-preprocess_methods = config['preprocess_methods']
-
-manual_qc2_steps = config['manual_qc2_steps']
-
-cancer_types=config['cancer_types']
-
 
 # ---- 1. Build minfi RGSet from raw plate data and labels
 
@@ -86,8 +78,8 @@ rule drop_samples_less_than_90pct_probes_detected:
 # ---- 3. Filter out samples with bisulphite conversion rate lower than specified in 'config.yml'
 
 qc_path2 = f'qc/3.{analysis_name}.RGChannelSet'
-qc_steps2 = [*qc_steps1, f'bisulphite{bisulphite_conversion_rate}']
-qc_step2 = '.'.join(qc_steps2)
+qc_step2_list = [*qc_steps1, f'bisulphite{bisulphite_conversion_rate}']
+qc_step2 = '.'.join(qc_step2_list)
 
 rule drop_samples_with_bisulphite_conversion_less_than_cutoff:
     input:
@@ -107,17 +99,21 @@ rule drop_samples_with_bisulphite_conversion_less_than_cutoff:
 
 # ---- 4. Filter out samples failing one or more manual QC steps specified in 'config.yml'
 
+# Read in relevant configuration
+manual_qc_steps = config['manual_qc_steps']
+
 # Build manual qc output file names
 manual_qc_step_names = [re.sub(':.*$', '', step) for step in manual_qc_steps]
 
 manual_qc_file_name = f'procdata/4.{analysis_name}.RGChannelSet'
-manual_qc_file_names = []
-qc_steps3 = qc_steps2
+manual_qc_output_file_names = []
+qc_step3_list = qc_step2_list
 
 for step in manual_qc_step_names:
-    qc_steps3 = [*qc_steps3, step]
-    manual_qc_step = '.'.join(qc_steps3)
-    manual_qc_file_names = [*manual_qc_file_names, f'{manual_qc_file_name}.{manual_qc_step}.qs']
+    qc_step3_list = [*qc_step3_list, step]
+    manual_qc_current_step = '.'.join(qc_step3_list)
+    manual_qc_output_file_names = [*manual_qc_output_file_names, 
+                                  f'{manual_qc_file_name}.{manual_qc_current_step}.qs']
 
 qc_step_num = 1 + len(manual_qc_step_names) 
 
@@ -125,7 +121,7 @@ rule drop_samples_failed_manual_qc:
     input:
         rgset=f'procdata/3.{analysis_name}.RGChannelSet.{qc_step2}.qs'
     output:
-        manual_qc_file_names
+        manual_qc_output_file_names
     shell:
         """
         Rscript scripts/4_dropSamplesFailedManualQC.R \
@@ -137,14 +133,14 @@ rule drop_samples_failed_manual_qc:
 
 # ---- 5. Filter out probes with less than 3 beads
 
-qc_steps_final = [*qc_steps3, 'probesGt3Beads']
+qc_steps_final = [*qc_step3_list, 'probesGt3Beads']
 final_qc_step = '.'.join(qc_steps_final)
 
 rule drop_probes_with_less_than_three_beads:
     input:
-        rgset=f'procdata/4.{analysis_name}.RGChannelSet.{manual_qc_step}.qs'
+        rgset=f'procdata/4.{analysis_name}.RGChannelSet.{manual_qc_current_step}.qs'
     output:
-        bead_counts=f'qc/5.{analysis_name}.RGChannelSet.{manual_qc_step}.bead_counts.csv',
+        bead_counts=f'qc/5.{analysis_name}.RGChannelSet.{manual_qc_current_step}.bead_counts.csv',
         rgset_filtered=f'procdata/5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
     shell:
         """
@@ -155,23 +151,28 @@ rule drop_probes_with_less_than_three_beads:
         """
 
 
-# ---- 6. Functional normalize RGChannelSet to MethylSet
-preprocess_methods = preprocess_methods.split(',')
+# ---- 6. Preprocess RGChannelSet to MethylSet
+
+# Read in relevant configuration
+preprocess_methods = config['preprocess_methods']
+
+# Split the input string
+preprocess_methods_split = preprocess_methods.split(',')
 
 rule preprocess_to_methylset_and_qc:
     input:
         rgset=f'procdata/5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
     output:
         methylsets=expand('procdata/6.{analysis_name}.MethylSet.{preprocess_method}.qs',
-            analysis_name=analysis_name, preprocess_method=preprocess_methods),
+            analysis_name=analysis_name, preprocess_method=preprocess_methods_split),
         qc_reports=expand('qc/6.{analysis_name}.MethylSet.{preprocess_method}.qc_report.csv',
-            analysis_name=analysis_name, preprocess_method=preprocess_methods)
+            analysis_name=analysis_name, preprocess_method=preprocess_methods_split)
     threads: nthread
     shell:
         """
         Rscript scripts/6_preprocessToMethylSetAndQC.R \
             -i {input.rgset} \
-            -m '{preprocess_methods}' \
+            -m '{preprocess_methods_split}' \
             -o '{output.methylsets}' \
             -r '{output.qc_reports}'
         """
@@ -179,13 +180,13 @@ rule preprocess_to_methylset_and_qc:
 
 # ---- 7. Visual the Raw RGSet vs Each Preprocessing Method with QC Metrics
 
-preprocess_string = '_vs_'.join(preprocess_methods)
+preprocess_string = '_vs_'.join(preprocess_methods_split)
 comparisons = f'rgSet_vs_{preprocess_string}'
 
 rule density_plot_preprocessed_vs_rgset:
     input:
         methylsets=expand('procdata/6.{analysis_name}.MethylSet.{preprocess_method}.qs',
-            analysis_name=analysis_name, preprocess_method=preprocess_methods),
+            analysis_name=analysis_name, preprocess_method=preprocess_methods_split),
         rgset=f'procdata/5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
     output:
         plots=f'qc/7.{analysis_name}.{comparisons}.density_plots.pdf'
@@ -200,11 +201,46 @@ rule density_plot_preprocessed_vs_rgset:
         """
 
 
+# ---- 8. Filter out one or more manual QC steps after prepreprocessing
+
+# Read in configuration for this step
+selected_preprocess_method = config['selected_preprocess_method']
+manual_qc2_steps = config['manual_qc2_steps']
+
+# Build manual qc output file names
+manual_qc2_step_names = [re.sub(':.*$', '', step) for step in manual_qc2_steps]
+
+manual_qc2_file_name = f'procdata/8.{analysis_name}.MethylSet'
+manual_qc2_output_file_names = []
+qc2_steps = []
+
+
+for step in manual_qc2_step_names:
+    qc2_steps = [*qc2_steps, step]
+    manual_qc2_current_step = '.'.join(qc2_steps)
+    manual_qc2_output_file_names = [*manual_qc2_output_file_names, 
+                                    f'{manual_qc2_file_name}.{manual_qc2_current_step}.qs']
+
+rule drop_samples_failed_manual_qc2:
+    input:
+        methylset=f'procdata/6.{analysis_name}.MethylSet.{selected_preprocess_method}.qs'
+    output:
+        manual_qc2_output_file_names
+    threads: nthread
+    shell:
+        """
+        Rscript scripts/8_dropSamplesFailedManualQC2.R \
+            -m {input.methylset} \
+            -q '{manual_qc2_steps}' \
+            -o '{output}'
+        """
+
+
 # ---- 9. Convert GenomicMethylSet to GenomicRatioSet and add annotations
 
 rule convert_gmset_to_grset_and_drop_sex_chromosomes:
     input:
-        methylset=f'procdata/7.{analysis_name}.MethylSet.funnorm.qs'
+        methylset=f'procdata/8.{analysis_name}.MethylSet.{manual_qc2_current_step}.qs'
     output:
         genomicmethylset=f'procdata/9.{analysis_name}.GenomicMethylSet.qs',
         ratioset=f'procdata/9.{analysis_name}.GenomicRatioSet.drop_sex_chr.qs'
@@ -222,7 +258,7 @@ rule convert_gmset_to_grset_and_drop_sex_chromosomes:
 rule filter_grset_poor_quality_probes:
     input:
         grset=f'procdata/9.{analysis_name}.GenomicRatioSet.drop_sex_chr.qs',
-        pvalues=f'qc/6.{analysis_name}.RGChannelSet.qc3.detection_pvals.csv'
+        pvalues=f'qc/2.{analysis_name}.RGChannelSet.detection_pvalues.csv'
     output:
         filtered_grset=f'procdata/10.{analysis_name}.GenomicRatioSet.drop_sex_chr.filter_probes.qs'
     threads: nthread
@@ -269,6 +305,8 @@ rule correct_grset_for_crossreactive_probes:
 
 # ---- 13. Subset grSet by cancer type
 
+cancer_types = config['cancer_types']
+
 rule subset_grset_by_cancer_types:
     input:
         grset=f'procdata/12.{analysis_name}.GenomicRatioSet.drop_sex_chr.filter_probes.drop_snps.correct_xreactive.qs'
@@ -302,7 +340,7 @@ rule extract_m_and_beta_values:
     threads: nthread
     shell:
         """
-        Rscript scripts/14_extractMandBetaValues.R \
+        Rscript scripts/14_extractCpGMandBetaValues.R \
             -g '{input.grsets}' \
             -b '{output.beta_values}' \
             -m '{output.m_values}'
@@ -310,7 +348,7 @@ rule extract_m_and_beta_values:
 
 
 # --- 15. Collapse Adjacent CpG sites into methyalted regions for M and Beta values
-rule collapse_adjacent_cpg_sites_to_methylated_regions:
+rule collapse_grset_cpgs_to_methylated_regions:
     input:
         grsets=expand('results/13.{analysis_name}.{cancer_type}.GenomicRatioSet.qs', 
                         analysis_name=analysis_name, cancer_type=cancer_types)
@@ -322,7 +360,7 @@ rule collapse_adjacent_cpg_sites_to_methylated_regions:
     threads: nthread
     shell:
         """
-        Rscript scripts/15_collapseAdjacentCpGSitesToMethylatedRegions.R \
+        Rscript scripts/15_collapseGRSetCpGsToMethylatedRegions.R \
             -g '{input.grsets}' \
             -b '{output.beta_region_grsets}' \
             -m '{output.m_region_grsets}'

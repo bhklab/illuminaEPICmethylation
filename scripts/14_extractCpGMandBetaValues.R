@@ -1,9 +1,14 @@
-library(minfi)
-library(optparse)
-library(data.table)
-library(BiocParallel)
-library(qs)
+# ---- 0. Load dependencies
+message("Loading script dependencies...\n")
 
+# Suppress package load messages to ensure logs are not cluttered
+suppressMessages({
+    library(minfi, quietly=TRUE)
+    library(data.table, quietly=TRUE)
+    library(qs, quietly=TRUE)
+    library(optparse, quietly=TRUE)
+    library(BiocParallel, quietly=TRUE)
+})
 
 # ---- 0. Parse CLI arguments
 option_list <- list(

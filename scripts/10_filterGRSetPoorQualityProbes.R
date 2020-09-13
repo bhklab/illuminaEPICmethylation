@@ -1,9 +1,14 @@
-library(minfi, quietly=TRUE)
-library(optparse, quietly=TRUE)
-library(data.table, quietly=TRUE)
-library(matrixStats, quietly=TRUE)
-library(qs, quietly=TRUE)
+# ---- 0. Load dependencies
+message("Loading script dependencies...\n")
 
+# Suppress package load messages to ensure logs are not cluttered
+suppressMessages({
+    library(minfi, quietly=TRUE)
+    library(data.table, quietly=TRUE)
+    library(qs, quietly=TRUE)
+    library(matrixStats, quietly=TRUE)
+    library(optparse, quietly=TRUE)
+})
 
 # ---- 0. Parse CLI arguments
 option_list <- list(
@@ -22,18 +27,18 @@ opt <- parse_args(OptionParser(option_list=option_list))
 
 
 # ---- 1. Load data
-message(paste0('Loading RGSet from: ', opt$input, '...\n'))
+message(paste0('Loading RGSet from: ', opt$grset, '...\n'))
 
 grSet <- qread(opt$grset)
 pValues <- fread(opt$pvalues)
-
 
 # --- 2 . Filter poor quality probes
 message(paste0('Filtering probes failing...\n'))
 
 # Match probes in pValues to rgSet
-pValues <- pValues[rownames %in% featureNames(grSet), ]
-keep <- rowSums(pValues[, -'rownames'] < 0.01) == ncol(grSet)
+colnames(grSet) <- trimws(colnames(grSet))
+pValuesSub <- pValues[rownames %in% rownames(grSet), .SD, .SDcol=colnames(pValues) %in% c('rownames', colnames(grSet))]
+keep <- rowSums(pValuesSub[, -'rownames'] < 0.01) == ncol(grSet)
 message("Keep: \n")
 print(table(keep))
 
