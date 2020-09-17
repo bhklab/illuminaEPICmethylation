@@ -324,19 +324,19 @@ rule subset_grset_by_cancer_types:
         """
 
 
-cancer_types = ['all_types', *cancer_types] 
+cancer_types_all = ['all_types', *cancer_types] 
 
 # ---- 14. Extract M and Beta values from each GenomicRatioSet for CpGs
 
 rule extract_m_and_beta_values:
     input:
         grsets=expand('results/13.{analysis_name}.{cancer_type}.GenomicRatioSet.qs', 
-                      analysis_name=analysis_name, cancer_type=cancer_types)
+                      analysis_name=analysis_name, cancer_type=cancer_types_all)
     output:
         m_values=expand('results/14.{analysis_name}.{cancer_type}.m_values.csv',
-                         analysis_name=analysis_name, cancer_type=cancer_types),
+                         analysis_name=analysis_name, cancer_type=cancer_types_all),
         beta_values=expand('results/14.{analysis_name}.{cancer_type}.beta_values.csv',
-                           analysis_name=analysis_name, cancer_type=cancer_types)
+                           analysis_name=analysis_name, cancer_type=cancer_types_all)
     threads: nthread
     shell:
         """
@@ -351,12 +351,12 @@ rule extract_m_and_beta_values:
 rule collapse_grset_cpgs_to_methylated_regions:
     input:
         grsets=expand('results/13.{analysis_name}.{cancer_type}.GenomicRatioSet.qs', 
-                        analysis_name=analysis_name, cancer_type=cancer_types)
+                        analysis_name=analysis_name, cancer_type=cancer_types_all)
     output:
         m_region_grsets=expand('results/15.{analysis_name}.{cancer_type}.GenomicRatioSet.m_values.regions.qs',
-                                 analysis_name=analysis_name, cancer_type=cancer_types),
+                                 analysis_name=analysis_name, cancer_type=cancer_types_all),
         beta_region_grsets=expand('results/15.{analysis_name}.{cancer_type}.GenomicRatioSet.beta_values.regions.qs',
-                                  analysis_name=analysis_name, cancer_type=cancer_types)
+                                  analysis_name=analysis_name, cancer_type=cancer_types_all)
     threads: nthread
     shell:
         """
@@ -374,22 +374,20 @@ methylation_values = ['m_values', 'beta_values']
 rule build_region_mappings_for_beta_and_m_values:
     input:
         grsets=expand('results/15.{analysis_name}.{cancer_type}.GenomicRatioSet.{methylation_values}.regions.qs',
-            analysis_name=analysis_name, cancer_type=cancer_types, methylation_values=methylation_values),
-        methylation_data=expand('results/15.{analysis_name}.{cancer_type}.GenomicRatioSet.{methylation_values}.regions.qs',
-            analysis_name=analysis_name, cancer_type=cancer_types, methylation_values=methylation_values),
-        methylation_values=methylation_values
+            analysis_name=analysis_name, cancer_type=cancer_types_all, methylation_values=methylation_values),
+        methylation_data=expand('results/14.{analysis_name}.{cancer_type}.{methylation_values}.csv',
+            analysis_name=analysis_name, cancer_type=cancer_types_all, methylation_values=methylation_values)
     output:
         mappings=expand('results/16.{analysis_name}.{cancer_type}.{methylation_value}.region_to_cpg_mappings.csv', 
-                        analysis_name=analysis_name, cancer_type=cancer_types, methylation_value=methylation_values),
+                        analysis_name=analysis_name, cancer_type=cancer_types_all, methylation_value=methylation_values),
         methyl_values=expand('results/16.{analysis_name}.{cancer_type}.{methylation_value}.regions.csv', 
-                             analysis_name=analysis_name, cancer_type=cancer_types, methylation_value=methylation_values)
+                             analysis_name=analysis_name, cancer_type=cancer_types_all, methylation_value=methylation_values)
     threads: nthread
     shell:
         """
         Rscript scripts/16_buildRegionMappingsForBetaAndMValues.R \
-            -g {input.grsets} \
-            -d {input.methylation_data} \
-            -v {input.methylation_values} \
-            -M {output.mappings} \
-            -V {output.methyl_values}
+            -g '{input.grsets}' \
+            -d '{input.methylation_data}' \
+            -M '{output.mappings}' \
+            -V '{output.methyl_values}'
         """
