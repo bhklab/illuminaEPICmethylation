@@ -29,11 +29,14 @@ manual_qc_steps:
 
 preprocess_methods: 'Funnorm,Illumina,Noob,SWAN'
 
-selected_preprocess_method: 'Illumina'
+selected_preprocess_method: 'SWAN'
 
 # Same as previous manual QC steps, except on the preprocessed/normalized methylSet
 manual_qc2_steps:
-    - 'none:'
+    - 'threePeaks:H4,E9,A12,F12;G10;H12;G2'
+    - 'aucRatioGt1.75:H1,G3,F6,F7,G8,G9,F10,F11;D1,C3,G7;D1,A2,A9;E1,A2'
+
+selected_qc2_step: 'threePeaks'
 
 # Regex columns based on these strings
 # NOTE: underscores get substituted to spaces inside the R script
