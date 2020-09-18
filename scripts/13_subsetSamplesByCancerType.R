@@ -34,15 +34,12 @@ grSet <- qread(opt$grset)
 
 # Parse string input into vector
 cancerTypes <- unlist(strsplit(opt$subsets, split=' '))
-print(cancerTypes)
 cancerTypes <- lapply(cancerTypes, FUN=gsub, pattern='_', replacement=' ')
-print(cancerTypes)
 
 
 subsets <- lapply(cancerTypes,  # pattern
                   FUN=grepl,
                   x=colData(grSet)$Sample_Group)
-print(subsets)
 
 # ---- 3. Subset GRSet based on 
 .subsetCols <- function(j, x) x[i=TRUE, j]
