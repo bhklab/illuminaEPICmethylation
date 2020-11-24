@@ -189,7 +189,8 @@ rule density_plot_preprocessed_vs_rgset:
             analysis_name=analysis_name, preprocess_method=preprocess_methods_split),
         rgset=f'procdata/5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
     output:
-        plots=f'qc/7.{analysis_name}.{comparisons}.density_plots.pdf'
+        plots=f'qc/7.{analysis_name}.{comparisons}.density_plots.pdf',
+        qc_report=f'qc/7.{analysis_name}.{comparisons}.stats_table.csv'
     threads: nthread
     shell:
         """
@@ -197,6 +198,7 @@ rule density_plot_preprocessed_vs_rgset:
             -m '{input.methylsets}' \
             -r {input.rgset} \
             -o '{output.plots}' \
+            -q '{output.qc_report}' \
             -t '{preprocess_methods}'
         """
 
@@ -210,7 +212,7 @@ manual_qc2_steps = config['manual_qc2_steps']
 # Build manual qc output file names
 manual_qc2_step_names = [re.sub(':.*$', '', step) for step in manual_qc2_steps]
 
-manual_qc2_file_name = f'procdata/8.{analysis_name}.MethylSet'
+manual_qc2_file_name = f'procdata/8.{analysis_name}.MethylSet.{selected_preprocess_method}'
 manual_qc2_output_file_names = []
 qc2_steps = []
 

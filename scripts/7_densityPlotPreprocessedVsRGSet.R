@@ -26,6 +26,9 @@ option_list <- list(
     make_option(c('-o', '--output'), 
         help='Path to write the pdf of density plots for each MethylSet.',
         type='character'),
+    make_option(c('-q', '--qc'),
+        help='Path to write the qc statistics data.table to.',
+        type='character'),
     make_option(c('-t', '--titles'),
         help='Title on plots for each methylSet included in -m.',
         type='character')
@@ -34,7 +37,8 @@ option_list <- list(
 opt <- parse_args(OptionParser(option_list=option_list))
 
 methylSetPaths <- unlist(strsplit(opt$methylsets, split=' '))
-plotTitles <- c('Unprocessed', unlist(strsplit(opt$titles, split=' ')))
+plotTitles <- c('Unprocessed', unlist(strsplit(opt$titles, split=',')))
+qcReportPath <- opt$qc
 
 # ---- 1. Read in methylSet
 message("Reading in data from:\n\t", 
@@ -133,6 +137,7 @@ for (methodIdx in seq_along(peakDifferences)) {
 }
 names(betaStatsDTs) <- plotTitles
 statsDT <- rbindlist(betaStatsDTs, idcol='preprocMethod')
+fwrite(statsDT, file=qcReportPath)
 rm(betaStatsDTs); gc()
 
 # ---- 4. Assemble DataTable of Beta Values for Plotting
