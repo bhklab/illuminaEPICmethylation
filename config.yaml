@@ -1,15 +1,21 @@
+## Illumina EPIC Methylation Analysis Configuration
+
+# Relative path to the data for each plate within the rawdata directory
 plate_data_dirs:
     - 'Plate1'
     - 'Plate2'
     - 'Plate3'
 
+# Relative paths to the plate label .csv files inside of the metadata directory
 plate_labels:
     - 'labels/plate1_labels.csv'
     - 'labels/plate2_labels.csv'
     - 'labels/plate3_labels.csv'
 
+# The maximum number of threads the pipeline can use
 nthread: 20
 
+# The name prepended to files to identify you analysis
 analysis_name: 'van_de_rijn'
 
 # Set the p-value cut-off for calling CpG probes as detected
@@ -31,12 +37,20 @@ preprocess_methods: 'Funnorm,Illumina,Noob,SWAN'
 
 selected_preprocess_method: 'Illumina'
 
-# Same as previous manual QC steps, except on the preprocessed/normalized methylSet
+# Same as previous manual QC steps, except on the preprocessed/normalized methylSet.
+# NOTE: The order of these steps matters! Please organize them from most to least important
+# qc steps.
 manual_qc2_steps:
     minAucRatio: 1.0
     maxNumPeaks: 3
     minPeakDiff: 0.5
 
+# 
+manual_qc2_exceptions:
+    
+
+# Which QC step to include. NOTE: This will include all steps before this one in the
+#   manual_qc2_steps list.
 selected_qc2_step: 'minAucRatio'
 
 # Regex columns based on these strings
