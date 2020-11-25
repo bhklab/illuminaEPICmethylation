@@ -91,10 +91,56 @@ This pipeline assumes the following directory structure:
 └── scripts
 ```
 
-Please at minimum create the `rawdata` and `metadata` directories, as the
+Please at minimum create the `rawdata` and `metadata` directories, as they
 are assumed to hold the raw Illumina EPIC microarray plate data (.xml, .idat, etc.) and the plate labels, respectively. The remaining missing directories will be
 created automatically as the pipeline runs.
 
 ### config.yaml
 
-This file hold the relevant pipeline documentation.
+This file hold the relevant pipeline documentation. At minimum, you
+must specify the paths to the raw plate data to `plate_data_dirs`,
+the plate labels to `plate_label`, the max `nthread` the pipeline should
+use, and an `analysis_name`. See the comments in the file for more information.
+
+## Using the Pipeline
+
+### Read in Data and Do Plate Level QC
+
+If you open `Snakefile` you will see the details of the workflow that this pipeline
+executes. The steps of the pipeline are organizeed into rule, and the output file
+from each rule is prepended with the rule number and the `analysis_name`.
+
+Because there are several qualitative QC steps in this pipeline, we do not recommend
+running it end to end. Once you configure the parameters in `config.yaml` up to
+`manual_qc_steps`, you should run the command:
+
+`snakemake --cores 2 drop_samples_with_bisulphite_conversion_less_than_cutoff`
+
+This will execute rule 1 through 3 using the number of cores specfied to `--cores`. 
+
+Step 1 creates an RGChannelSet from the raw plate data. Step 2 filters out samples
+with less the 90% of CpG probes detected, it also generates a number of qc files
+in the `qc` directory. Step 3 filters out probes with a bisulphite conversion rate
+lower than what is specified in `config.yaml`.
+
+At this point you should have a look at the the QC metrics generated in the previous step
+and decide which, if any, samples you wish to filter out. There may also be sample you
+wish to remove for other reasons, such as techincal replicates or qc wells.
+
+To do this you will use specify one or more rounds of sample removal to the `manual_qc_steps`
+parameter in `config.yaml`. Each step should be specified as a string where anything before
+a colon is the step name, which is used to label the output file. After the colon, plates
+are separated by a semi-colon and samples by a comma. Please note that the plates names are
+lexically sorted when filtering, so if your plate names don't lexically sort into their
+natural numeric order, please fix the names.
+
+For example, to remove sample wells H3 and D5 from plate 1 and G11 from plate 3 would be specified as: 'qcStepName:H3,D5;;G11'. Each item in the `manual_qc_steps` list is executed iteratively,
+and saved to a file with all previous qc steps names appended to it. This is to allow selection
+of different manual QC levels for different analyses in downstream analysis.
+
+### Manual QC and Preprocessing
+
+
+
+
+### Final QC and Cancer Type Separation

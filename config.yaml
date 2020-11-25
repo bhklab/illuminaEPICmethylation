@@ -33,6 +33,9 @@ manual_qc_steps:
     - 'noReplicates:B1,C8,F6;A6,E7,E11'
     - 'DTFunique:E3,E4,E6,D7,B9,A10;E1,F2,G3,B4,F4,B5,A8,A9,D9,E9,C10,D10,H10,C11,H11,B12,D12,H12;G1,F4,G4,H4,A5,A7,E7,F7,A8,E8,B12'
 
+# Which preprocessing methods to compare in rule 7
+# We recommend you leave this as is to get a good comparison of 
+#   how each normalization method performs on your data.
 preprocess_methods: 'Funnorm,Illumina,Noob,SWAN'
 
 selected_preprocess_method: 'Illumina'
@@ -45,9 +48,9 @@ manual_qc2_steps:
     maxNumPeaks: 3
     minPeakDiff: 0.5
 
-# 
+# Are there any samples which should be excluded from the criteria in manual_qc2_steps
 manual_qc2_exceptions:
-    
+    - ''
 
 # Which QC step to include. NOTE: This will include all steps before this one in the
 #   manual_qc2_steps list.
