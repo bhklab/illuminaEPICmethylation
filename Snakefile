@@ -207,34 +207,32 @@ rule density_plot_preprocessed_vs_rgset:
 
 # Read in configuration for this step
 selected_preprocess_method = config['selected_preprocess_method']
-manual_qc2_steps = config['manual_qc2_steps']
+manual_qc2_steps = list(config['manual_qc2_steps'].keys())
 
-# Build manual qc output file names
-manual_qc2_step_names = [re.sub(':.*$', '', step) for step in manual_qc2_steps]
-
+# Build outpuit file names for iteratively strict qc steps
 manual_qc2_file_name = f'procdata/8.{analysis_name}.MethylSet.{selected_preprocess_method}'
 manual_qc2_output_file_names = []
 qc2_steps = []
 
-for step in manual_qc2_step_names:
+for step in manual_qc2_steps:
     qc2_steps = [*qc2_steps, step]
     manual_qc2_current_step = '.'.join(qc2_steps)
     manual_qc2_output_file_names = [*manual_qc2_output_file_names, 
                                     f'{manual_qc2_file_name}.{manual_qc2_current_step}.qs']
 
+
 rule drop_samples_failed_manual_qc2:
     input:
-        methylset=f'procdata/6.{analysis_name}.MethylSet.{selected_preprocess_method}.qs'
+        methylset=f'procdata/6.{analysis_name}.MethylSet.{selected_preprocess_method}.qs',
+        qc_report=f'qc/7.{analysis_name}.{comparisons}.stats_table.csv'
+    params:
+        preproc_method=selected_preprocess_method,
+        qc_criteria=config['manual_qc2_steps']
     output:
         manual_qc2_output_file_names
     threads: nthread
-    shell:
-        """
-        Rscript scripts/8_dropSamplesFailedManualQC2.R \
-            -m {input.methylset} \
-            -q '{manual_qc2_steps}' \
-            -o '{output}'
-        """
+    script:
+        "scripts/8_dropSamplesFailedManualQC2.R"
 
 
 # ---- 9. Convert GenomicMethylSet to GenomicRatioSet and add annotations

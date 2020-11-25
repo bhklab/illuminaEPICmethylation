@@ -10,87 +10,38 @@ suppressMessages({
 })
 
 # ---- 0. Parse CLI arguments
-message("Parsing command line arguments...\n")
-option_list <- list(
-    make_option(c('-m', '--methylset'), 
-        help=c("Path to the input RGChannelSet object."), 
-        type="character"),
-    make_option(c('-q', '--qc_steps'),
-        help='String specifying the manual QC steps to apply, 
-              as specified in the manual_qc2_steps field of config.yml',
-        type='character'),
-    make_option(c('-o', '--output'),
-        help='Path and filename to save the per sample probe QC results to.', 
-        type='character'),
-    make_option(c('-p', '--pvalues'),
-        help='Path to save the detection p-values for the final methylset to.',
-        type='character')
-)
 
-opt <- parse_args(OptionParser(option_list=option_list))
-
-output <- unlist(strsplit(opt$output, split=' '))
+input <- snakemake@input
+output <- snakemake@output
+params <- snakemake@params
 
 # ---- 1. Read in Preprocessed MethylSet
-message(paste0("Loading MethylSet object from ", opt$methylset, '...\n'))
-methylSet <- qread(opt$methylset)
+message(paste0("Loading MethylSet object from ", input$methylset, '...\n'))
+methylSet <- qread(input$methylset)
 
+message(paste0("Loading QC Metrics from ", input$qc_report, '...\n'))
+qcMetricDT <- fread(input$qc_report)[preprocMethod == params$preproc_method, ]
 
 # ---- 2. Subset out failed samples
 message('Removing failed samples...\n')
 
-colData <- data.table(as.data.frame(colData(methylSet)))
+for (i in seq_along(params$qc_criteria)) {
 
-.strsplitUnlist <- function(str, split) unlist(strsplit(str, split=split), recursive=FALSE)
+    print(names(params$qc_criteria)[i])
+    switch(names(params$qc_criteria)[i],
+        'minAucRatio'={ keepSamples <- qcMetricDT[aucRatio > params$qc_criteria$minAucRatio, ]$sample },
+        'maxNumPeaks'={ keepSamples <- qcMetricDT[numPeaks < params$qc_criteria$maxNumPeaks, ]$sample },
+        'minPeakDiff'={ keepSamples <- qcMetricDT[peakDiff > params$qc_criteria$minPeakDiff, ]$sample },
+        stop("Unknown QC filtering criteria, valid options are minAucRatio, maxNumPeaks 
+            an maxPeakDiff"))
 
-input <- .strsplitUnlist(opt$qc_steps, split=' ')
-steps <- lapply(input, FUN=.strsplitUnlist, split=':')
-manualQCStepNames <- unlist(lapply(steps, `[[`, i=1))
-if (length(steps) < 2) {
-    message(paste0("No samples failed manual QC step 2, saving MethylSet to ", output))
-    qsave(methylSet, output)
-} else {
-    samplesFailedQCPerStep <- lapply(steps, `[[`, i=2)
+    print(keepSamples)
 
-    samplesFailedQCPerStepPerPlate <- lapply(samplesFailedQCPerStep, .strsplitUnlist, split=';')
+    # Note: need to make.names because we formatted the sample names for plotting in the previous rule
+    methylSet <- methylSet[, make.names(colnames(methylSet)) %in% keepSamples]
+    qcMetricDT <- qcMetricDT[sample %in% keepSamples]
 
-    .strsplitList <- function(list) {
-        lapply(list, .strsplitUnlist, split=',')
-    }
-
-    # NOTE: This assumes that the sorted plates are in the same order as samples/wells 
-    #   in the config.yml file!
-    failedSamplesList <- lapply(samplesFailedQCPerStepPerPlate, 
-                                FUN=.strsplitList)
-
-    allPlateNames <- sort(unique(colData$Sample_Plate))
-
-    .getPlateWellIndexes <- function(plate, wells, colData) {
-        return(colData[Sample_Plate == plate & Sample_Well %in% wells, which=TRUE])
-    }
-
-    for (i in seq_along(failedSamplesList)) {
-        message(paste0('Failed samples for manual qc step: ', manualQCStepNames[i], '...\n'))
-        print(failedSamplesList[[i]])
-        plateNames <- allPlateNames[seq_along(failedSamplesList[[i]])]
-
-        dropIndexes <- unlist(mapply(
-            FUN=.getPlateWellIndexes,  # Function to apply
-            plate=plateNames, wells=failedSamplesList[[i]],  # Arguments to map over together
-            MoreArgs=list('colData'=colData),  # Additional arguments
-            SIMPLIFY=FALSE  # Don't try to simplify to a matrix or vector
-            ))
-
-        keepIndexes <- setdiff(seq_len(ncol(methylSet)), dropIndexes)
-
-        message("Removing samples failed QC...\n")
-        methylSet <- methylSet[, keepIndexes]
-        print(methylSet)
-        message("\n")
-
-        message(paste0('Saving MethylSet for ', manualQCStepNames[i], ' to: ', output[i], '...\n'))
-        qsave(methylSet, output[i])
-    }
+    qsave(methylSet, file=output[[i]])
 }
 
 message("Done!\n\n")
