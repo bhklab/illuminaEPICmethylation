@@ -261,7 +261,7 @@ rule convert_gmset_to_grset_and_drop_sex_chromosomes:
 rule filter_grset_poor_quality_probes:
     input:
         grset=f'procdata/9.{analysis_name}.{selected_preprocess_method}.GenomicRatioSet.drop_sex_chr.qs',
-        pvalues=f'qc/2.{analysis_name}.{selected_preprocess_method}.RGChannelSet.detection_pvalues.csv'
+        pvalues=f'qc/2.{analysis_name}.RGChannelSet.detection_pvalues.csv'
     output:
         filtered_grset=f'procdata/10.{analysis_name}.{selected_preprocess_method}.GenomicRatioSet.drop_sex_chr.filter_probes.qs'
     threads: nthread
@@ -305,6 +305,7 @@ rule correct_grset_for_crossreactive_probes:
             -o {output.drop_xreactive_grset}
         """
 
+## TODO:: Iteratively build the file labels so there aren't so many parameters being passed to input/output
 
 # ---- 13. Subset grSet by cancer type
 
@@ -316,7 +317,7 @@ rule subset_grset_by_cancer_types:
     output:
         grset=f'results/13.{analysis_name}.{selected_preprocess_method}.all_types.GenomicRatioSet.qs',
         grsets=expand('results/13.{analysis_name}.{selected_preprocess_method}.{cancer_type}.GenomicRatioSet.qs', 
-                      analysis_name=analysis_name, cancer_type=cancer_types)
+                      analysis_name=analysis_name, cancer_type=cancer_types, selected_preprocess_method=selected_preprocess_method)
     threads: nthread
     shell:
         """
@@ -334,12 +335,12 @@ cancer_types_all = ['all_types', *cancer_types]
 rule extract_m_and_beta_values:
     input:
         grsets=expand('results/13.{analysis_name}.{selected_preprocess_method}.{cancer_type}.GenomicRatioSet.qs', 
-                      analysis_name=analysis_name, cancer_type=cancer_types_all)
+                      analysis_name=analysis_name, cancer_type=cancer_types_all, selected_preprocess_method=selected_preprocess_method)
     output:
-        m_values=expand('results/14.{analysis_name}..{selected_preprocess_method}.{cancer_type}.m_values.csv',
-                         analysis_name=analysis_name, cancer_type=cancer_types_all),
+        m_values=expand('results/14.{analysis_name}.{selected_preprocess_method}.{cancer_type}.m_values.csv',
+                         analysis_name=analysis_name, cancer_type=cancer_types_all, selected_preprocess_method=selected_preprocess_method),
         beta_values=expand('results/14.{analysis_name}.{selected_preprocess_method}.{cancer_type}.beta_values.csv',
-                           analysis_name=analysis_name, cancer_type=cancer_types_all)
+                           analysis_name=analysis_name, cancer_type=cancer_types_all, selected_preprocess_method=selected_preprocess_method)
     threads: nthread
     shell:
         """
@@ -354,12 +355,12 @@ rule extract_m_and_beta_values:
 rule collapse_grset_cpgs_to_methylated_regions:
     input:
         grsets=expand('results/13.{analysis_name}.{selected_preprocess_method}.{cancer_type}.GenomicRatioSet.qs', 
-                        analysis_name=analysis_name, cancer_type=cancer_types_all)
+                        analysis_name=analysis_name, cancer_type=cancer_types_all, selected_preprocess_method=selected_preprocess_method)
     output:
         m_region_grsets=expand('results/15.{analysis_name}.{selected_preprocess_method}.{cancer_type}.GenomicRatioSet.m_values.regions.qs',
-                                 analysis_name=analysis_name, cancer_type=cancer_types_all),
+                                 analysis_name=analysis_name, cancer_type=cancer_types_all, selected_preprocess_method=selected_preprocess_method),
         beta_region_grsets=expand('results/15.{analysis_name}.{selected_preprocess_method}.{cancer_type}.GenomicRatioSet.beta_values.regions.qs',
-                                  analysis_name=analysis_name, cancer_type=cancer_types_all)
+                                  analysis_name=analysis_name, cancer_type=cancer_types_all, selected_preprocess_method=selected_preprocess_method)
     threads: nthread
     shell:
         """
@@ -376,14 +377,14 @@ methylation_values = ['m_values', 'beta_values']
 rule build_region_mappings_for_beta_and_m_values:
     input:
         grsets=expand('results/15.{analysis_name}.{selected_preprocess_method}.{cancer_type}.GenomicRatioSet.{methylation_values}.regions.qs',
-            analysis_name=analysis_name, cancer_type=cancer_types_all, methylation_values=methylation_values),
+            analysis_name=analysis_name, cancer_type=cancer_types_all, methylation_values=methylation_values, selected_preprocess_method=selected_preprocess_method),
         methylation_data=expand('results/14.{analysis_name}.{selected_preprocess_method}.{cancer_type}.{methylation_values}.csv',
-            analysis_name=analysis_name, cancer_type=cancer_types_all, methylation_values=methylation_values)
+            analysis_name=analysis_name, cancer_type=cancer_types_all, methylation_values=methylation_values, selected_preprocess_method=selected_preprocess_method)
     output:
         mappings=expand('results/16.{analysis_name}.{selected_preprocess_method}.{cancer_type}.{methylation_value}.region_to_cpg_mappings.csv', 
-                        analysis_name=analysis_name, cancer_type=cancer_types_all, methylation_value=methylation_values),
+                        analysis_name=analysis_name, cancer_type=cancer_types_all, methylation_value=methylation_values, selected_preprocess_method=selected_preprocess_method),
         methyl_values=expand('results/16.{analysis_name}.{selected_preprocess_method}.{cancer_type}.{methylation_value}.regions.csv', 
-                             analysis_name=analysis_name, cancer_type=cancer_types_all, methylation_value=methylation_values)
+                             analysis_name=analysis_name, cancer_type=cancer_types_all, methylation_value=methylation_values, selected_preprocess_method=selected_preprocess_method)
     threads: nthread
     shell:
         """

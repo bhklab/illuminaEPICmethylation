@@ -39,7 +39,7 @@ cancerTypes <- lapply(cancerTypes, FUN=gsub, pattern='_', replacement=' ')
 
 subsets <- lapply(cancerTypes,  # pattern
                   FUN=grepl,
-                  x=colData(grSet)$Sample_Group)q
+                  x=colData(grSet)$Sample_Group)
 
 # ---- 3. Subset GRSet based on 
 .subsetCols <- function(j, x) x[i=TRUE, j]
