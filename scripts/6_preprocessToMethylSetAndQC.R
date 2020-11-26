@@ -10,37 +10,21 @@ suppressMessages({
     library(wateRmelon, quietly=TRUE)
 })
 
-
-# ---- 0. Parse CLI arguments
-
-option_list <- list(
-    make_option(c('-i', '--rgset'),
-        help=c("Path to the quality controlled RGChannelSet object."),
-        type="character"),
-    make_option(c('-m', '--methods'),
-        help='Comma separated string specify the preprocessing methods to use for making MethylSets. 
-            Options are: Illumina, SWAN, Noob and Funnorm.',
-        type='character'),
-    make_option(c('-o', '--outputs'),
-        help=c("Path(s) to save the resulting methylSet(s) to."),
-        type="character"),
-    make_option(c('-r', '--reports'), 
-        help='Path(s) to save the qc file(s) to.', 
-        type='character')
-)
-
-opt <- parse_args(OptionParser(option_list=option_list))
+# ---- 0. Parse Snakemake arguments
+input <- snakefile@input
+params <- snakefile@params
+output <- snakefile@output
 
 
 # ---- 1. Read in rgSet
-message(paste0('Reading input file from ', opt$rgset, '...\n'))
+message(paste0('Reading input file from ', input$rgset, '...\n'))
 
 rgSet <- qread(opt$rgset)
 
 
-methods <- unlist(strsplit(opt$methods, split=' '))
-outputs <- unlist(strsplit(opt$outputs, split=' '))
-reports <- unlist(strsplit(opt$reports, split=' '))
+methods <- params$preprocess_methods
+outputs <- output$methylsets
+reports <- output$qc_reports
 
 for (i in seq_along(outputs)) {
 

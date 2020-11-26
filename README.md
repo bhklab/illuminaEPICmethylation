@@ -136,11 +136,16 @@ Once you have setup your manual qc steps, we recommend running the command:
 
 `snakemake --cores 2 density_plot_preprocessed_vs_rgset`
 
-This will execute rules 4 through 7. This rule generates two qc files. 
+This will execute rules 4 through 7. 
+
+Rule 7 generates two qc files. 
 The first is a `.pdf` file showing the beta-value distribution for each sample under each of the normalization methods specified to the `preprocess_methods` parameter in `config.yaml`. It is a good idea to have a look at these files to determine the correct parameter cut-offs for the second round of manual qc. You can also identify samples which technically fail one of the three qc metrics computed, but still have a good distribution on visual inspection of the plot.
 
+The other file is a `.csv` summarizing the qc metrics for each sample with each preprocessing method. This is used in the next step to select samples based on the criteria
+specifed in the `manual_qc2_steps` paramter of `config.yaml`.
 
 ### Final QC and Cancer Type Separation
+
 
 
 

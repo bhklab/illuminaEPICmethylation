@@ -1,6 +1,8 @@
 # ---- 0. Load dependencies
 message('Loading script dependencies...\n')
 
+print(snakemake)
+
 # Suppress package load messages to ensure logs are not cluttered
 suppressMessages({
     library(minfi, quietly=TRUE)
@@ -14,19 +16,23 @@ suppressMessages({
 
 # ---- 0. Parse Snakemake arguments
 
+print(snakemake)
+
 input <- snakemake@input
+params <- snakemake@params
 output <- snakemake@output
+nthreads <- snakemake@threads
 
 methylSetPaths <- input$methylsets
-plotTitles <- c('Unprocessed', input$plot_titles)
-qcReportPath <- output$qc
+plotTitles <- c('Unprocessed', params$plot_titles)
+qcReportPath <- output$qc_report
 
 # ---- 1. Read in methylSet
 message("Reading in data from:\n\t", 
         paste0(input$rgset, '\n\t', paste0(methylSetPaths, collapse='\n\t'), '\n'))
 
-methylSets <- bplapply(methylSetPaths, qread, nthreads=4)
-rgSet <- qread(input$rgset, nthreads=20)
+methylSets <- bplapply(methylSetPaths, qread, nthreads=floor(nthread/length(methylSetPaths)))
+rgSet <- qread(input$rgset, nthreads=nthreads)
 
 plotSets <- c(list(rgSet), methylSets)
 rm(methylSets); rm(rgSet); gc()
