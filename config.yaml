@@ -26,9 +26,10 @@ detection_pvalue: 0.05
 # We recommend lieaving this as default unless you have a good justification
 bisulphite_conversion_rate: 90
 
-# Specify iterative steps of manual QC, where the step name is first followed by a colon, 
-#   then a comma separated list of wells for plate 1, then a colon, a comma separated list of wells
-#   for plate 2, etc.
+# Specify iterative steps of manual QC, where each step is applied in order such that the
+#  qc filtering is all samples specified before that step. The name of each step in the
+#  configuration will be appended to the filename of the output. Please ensure that the
+#  plate labels match the exact format in plate_labels.
 manual_qc_steps:
     logMU9: 
         Plt-1: [H3]

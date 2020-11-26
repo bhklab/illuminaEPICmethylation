@@ -110,8 +110,8 @@ rule drop_samples_failed_manual_qc:
         manual_qc_steps=manual_qc_steps
     output:
         file_names=manual_qc_output_file_names
-    shell:
-        "Rscript scripts/4_dropSamplesFailedManualQC.R"
+    script:
+        "scripts/4_dropSamplesFailedManualQC.R"
 
 
 # ---- 5. Filter out probes with less than 3 beads
