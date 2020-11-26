@@ -39,7 +39,7 @@ rule build_rgset_from_plate_data:
         plates=expand('rawdata/{plate_dirs}', plate_dirs=plate_data_dirs),
         labels=expand('metadata/{labels}', labels=plate_labels)
     output:
-        f'procdata/1.{analysis_name}.RGChannelSet.qs'
+        rgset=f'procdata/1.{analysis_name}.RGChannelSet.qs'
     threads: nthread
     script:
         "scripts/1_buildRGsetFromPlateData.R"
@@ -74,17 +74,13 @@ qc_step2 = '.'.join(qc_step2_list)
 rule drop_samples_with_bisulphite_conversion_less_than_cutoff:
     input:
         rgset=f'procdata/2.{analysis_name}.RGChannelSet.{qc_step1}.qs'
+    params:
+        bisulphite_conversion_rate=bisulphite_conversion_rate
     output:
-        bisulphite_conversion=f'{qc_path2}.bisulphite_conversions.csv',
+        bisulphite_qc=f'{qc_path2}.bisulphite_conversions.csv',
         rgset_filtered=f'procdata/3.{analysis_name}.RGChannelSet.{qc_step2}.qs'
-    shell:
-        """
-        Rscript scripts/3_dropSamplesBisulfiteConversionLessThanCutoff.R\
-            -r {input.rgset} \
-            -c {bisulphite_conversion_rate} \
-            -P {qc_path2} \
-            -o {output.rgset_filtered}
-        """
+    script:
+        "scripts/3_dropSamplesBisulfiteConversionLessThanCutoff.R"
 
 
 # ---- 4. Filter out samples failing one or more manual QC steps specified in 'config.yml'
@@ -93,7 +89,7 @@ rule drop_samples_with_bisulphite_conversion_less_than_cutoff:
 manual_qc_steps = config['manual_qc_steps']
 
 # Build manual qc output file names
-manual_qc_step_names = [re.sub(':.*$', '', step) for step in manual_qc_steps]
+manual_qc_step_names = list(manual_qc_steps.keys())
 
 manual_qc_file_name = f'procdata/4.{analysis_name}.RGChannelSet'
 manual_qc_output_file_names = []
@@ -110,15 +106,12 @@ qc_step_num = 1 + len(manual_qc_step_names)
 rule drop_samples_failed_manual_qc:
     input:
         rgset=f'procdata/3.{analysis_name}.RGChannelSet.{qc_step2}.qs'
+    params:
+        manual_qc_steps=manual_qc_steps
     output:
-        manual_qc_output_file_names
+        file_names=manual_qc_output_file_names
     shell:
-        """
-        Rscript scripts/4_dropSamplesFailedManualQC.R \
-            -r {input.rgset} \
-            -q '{manual_qc_steps}' \
-            -o '{output}'
-        """
+        "Rscript scripts/4_dropSamplesFailedManualQC.R"
 
 
 # ---- 5. Filter out probes with less than 3 beads

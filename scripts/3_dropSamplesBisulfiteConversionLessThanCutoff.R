@@ -12,30 +12,15 @@ suppressMessages({
 })
 
 
-# ---- 0. Parse CLI arguments
-message("Parsing command line arguments...\n")
-option_list <- list(
-    make_option(c('-r', '--rgset'), 
-        help="Path to the input RGChannelSet object.", 
-        type="character"),
-    make_option(c('-c', '--conversion_rate'),
-        help='Bisulphite conversion cut-off for calling probes as detected, 
-              as an integer specifying the percent converted.',
-        type='numeric'),
-    make_option(c('-P', '--path'),
-        help='Path to save the output qc files to.',
-        type='character'),
-    make_option(c('-o', '--output'),
-        help='Path and filename to save the filtered RGChannelSet to.', 
-        type='character')
-)
+# ---- 0. Parse Snakemake arguments
 
-opt <- parse_args(OptionParser(option_list=option_list))
-
+input <- snakemake@input
+params <- snakemake@params
+output <- snakemake@output
 
 # ---- 1. Load RGChannelSet
-message("Reading in RGChannelSet from: ", opt$rgset, '...\n')
-rgSet <- qread(opt$rgset)
+message("Reading in RGChannelSet from: ", input$rgset, '...\n')
+rgSet <- qread(input$rgset)
 
 
 # ---- 2. Calculate the bisulphite conversion rates per sample and save to disk
@@ -47,12 +32,12 @@ bisulphiteConversionDT <- data.table(
                             )
 
 
-bsOut <- paste0(opt$path, '.bisulphite_conversions.csv')
+bsOut <- paste0(output$bisulphite_qc, '.bisulphite_conversions.csv')
 fwrite(bisulphiteConversionDT, file=bsOut)
 
 
 # ---- 3. Determine which how many and which samples fail bisulphite conversion qc
-numPassed <- sum(bisulphiteConversionDT$conversion_rate > opt$conversion_rate)
+numPassed <- sum(bisulphiteConversionDT$conversion_rate > params$bisulphite_conversion_rate)
 
 message(paste0(numPassed, ' out of ', nrow(bisulphiteConversionDT), 
                ' samples passed qc at bisulphite conversion rate of ', 
@@ -60,22 +45,22 @@ message(paste0(numPassed, ' out of ', nrow(bisulphiteConversionDT),
 
 message(paste0('The following samples failed at bisulphite conversion rate of ', 
         opt$conversion_rate, '%:\n\t ', 
-        paste0(bisulphiteConversionDT[conversion_rate < opt$conversion_rate]$sample, 
+        paste0(bisulphiteConversionDT[conversion_rate < params$bisulphite_conversion_rate]$sample, 
                collapse=',\n\t'), 
         '\n'))
 
 
 # ---- 4. Drop samples failing the bisulphite conversion cut-off
 message("Subsetting RGChannelSet to samples passing bisulphite QC...\n")
-keepSamples <- bisulphiteConversion > opt$conversion_rate
+keepSamples <- bisulphiteConversion > params$bisulphite_conversion_rate
 
 rgSetFiltered <- rgSet[, keepSamples]
 print(rgSetFiltered)
 message('\n')
 
 # ---- 5. Save RGChannelSet to disk
-message(paste0("Saving RGChannel set to ", opt$output, '...\n'))
-qsave(rgSetFiltered, file=opt$output)
+message(paste0("Saving RGChannel set to ", output$rgset_filtered, '...\n'))
+qsave(rgSetFiltered, file=output$rgset_filtered)
 
 
 message("Done!\n\n")

@@ -15,7 +15,6 @@ input <- snakemake@input
 params <- snakemake@params
 output <- snakemake@output
 
-
 # ---- 1. Load RGChannelSet
 message("Reading in RGChannelSet from: ", input$rgset, '...\n')
 rgSet <- qread(input$rgset)
@@ -30,7 +29,7 @@ detectionQCResults <- summarizeDetectionPvalueQC(rgSet, pValue=params$detection_
 
 # ---- 4. Construct result names and save QC results to disk
 
-detectionPOut <- output$detectionPValues
+detectionPOut <- output$detectionPvalues
 sampleQCOut <- output$sampleQC
 probeQCOut <- output$probeQC
 

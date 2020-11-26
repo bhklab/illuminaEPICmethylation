@@ -6,31 +6,19 @@ suppressMessages({
     library(minfi, quietly=TRUE)
     library(data.table, quietly=TRUE)
     library(qs, quietly=TRUE)
-    library(optparse, quietly=TRUE)
 })
 
-# ---- 0. Parse CLI arguments
-message("Parsing command line arguments...\n")
-option_list <- list(
-    make_option(c('-r', '--rgset'), 
-        help=c("Path to the input RGChannelSet object."), 
-        type="character"),
-    make_option(c('-q', '--qc_steps'),
-        help='String specifying the manual QC steps to apply, 
-              as specified in the manual_qc_steps field of config.yml',
-        type='character'),
-    make_option(c('-o', '--output'),
-        help='Path and filename to save the per sample probe QC results to.', 
-        type='character')
-)
+# ---- 0. Parse Snakemake arguments
+input <- snakemake@input
+params <- snakemake@params
+output <- snakemake@output
 
-opt <- parse_args(OptionParser(option_list=option_list))
 
-output <- unlist(strsplit(opt$output, split=' '))
+print(params)
 
 # ---- 1. Read in RGSet
-message(paste0("Loading RGChannelSet object from ", opt$rgset, '...\n'))
-rgSet <- qread(opt$rgset)
+message(paste0("Loading RGChannelSet object from ", input$rgset, '...\n'))
+rgSet <- qread(input$rgset)
 
 
 # ---- 2. Subset out failed samples
@@ -38,38 +26,21 @@ message('Removing failed samples...\n')
 
 colData <- data.table(as.data.frame(colData(rgSet)))
 
-.strsplitUnlist <- function(str, split) unlist(strsplit(str, split=split), recursive=FALSE)
-
-input <- .strsplitUnlist(opt$qc_steps, split=' ')
-steps <- lapply(input, FUN=.strsplitUnlist, split=':')
-manualQCStepNames <- unlist(lapply(steps, `[[`, i=1))
-samplesFailedQCPerStep <- lapply(steps, `[[`, i=2)
-
-samplesFailedQCPerStepPerPlate <- lapply(samplesFailedQCPerStep, .strsplitUnlist, split=';')
-
-.strsplitList <- function(list) {
-    lapply(list, .strsplitUnlist, split=',')
-}
-
-# NOTE: This assumes that the sorted plates are in the same order as samples/wells 
-#   in the config.yml file!
-failedSamplesList <- lapply(samplesFailedQCPerStepPerPlate, 
-                            FUN=.strsplitList)
-
-allPlateNames <- sort(unique(colData$Sample_Plate))
-
 .getPlateWellIndexes <- function(plate, wells, colData) {
     return(colData[Sample_Plate == plate & Sample_Well %in% wells, which=TRUE])
 }
 
-for (i in seq_along(failedSamplesList)) {
-    message(paste0('Failed samples for manual qc step: ', manualQCStepNames[i], '...\n'))
-    print(failedSamplesList[[i]])
-    plateNames <- allPlateNames[seq_along(failedSamplesList[[i]])]
+manual_qc_steps <- params$manual_qc_steps
+qc_step_names <- names(manual_qc_steps)
+
+for (i in seq_along(manual_qc_steps)) {
+    message(paste0('Failed samples for manual qc step: ', qc_step_names[i], '...\n'))
+    print(manual_qc_steps[[i]])
+    plateNames <- names(manual_qc_steps[[i]])
 
     dropIndexes <- unlist(mapply(
         FUN=.getPlateWellIndexes,  # Function to apply
-        plate=plateNames, wells=failedSamplesList[[i]],  # Arguments to map over together
+        plate=plateNames, wells=manual_qc_steps[[i]],  # Arguments to map over together
         MoreArgs=list('colData'=colData),  # Additional arguments
         SIMPLIFY=FALSE  # Don't try to simplify to a matrix or vector
         ))

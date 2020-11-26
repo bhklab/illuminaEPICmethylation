@@ -4,24 +4,20 @@ message("Loading script dependencies...\n")
 # Suppress package load messages to ensure logs are not cluttered
 suppressMessages({
     library(minfi, quietly=TRUE)
-    library(optparse, quietly=TRUE)
     library(BiocParallel, quietly=TRUE)
     library(qs, quietly=TRUE)
 })
 
 # ---- 0. Parse CLI arguments
 
+# Note: All inputs are lists, not vectors
 input <- snakemake@input
 output <- snakemake@output
-
-cat(input)
-cat(output)
 
 # ---- 1. Read in data
 message("Reading in plate data...\n")
 
-
-plateDirs <- unlist(strsplit(input$plates, ' '))
+plateDirs <- input$plates
 arrays <- lapply(plateDirs, FUN=read.metharray.sheet)
 
 
@@ -30,7 +26,7 @@ message("Reading in plate labels...\n")
 
 
 ## FIXME:: Why is this making a list of lists?
-labelPaths <- unlist(strsplit(input$labels, ' '))
+labelPaths <- input$labels
 
 labels <- lapply(labelPaths, read.csv)
 
@@ -92,6 +88,6 @@ finalRGSet <- Reduce(f=.combineArrays, finalRGSets)
 # ---- 6. Save the RGSet to disk
 message("Saving merged RGSet to disk...\n")
 
-qsave(finalRGSet, file=output[[1]])
+qsave(finalRGSet, file=output$rgset)
 
 message("Done!\n\n")
