@@ -32,27 +32,28 @@ bisulphiteConversionDT <- data.table(
                             )
 
 
-bsOut <- paste0(output$bisulphite_qc, '.bisulphite_conversions.csv')
-fwrite(bisulphiteConversionDT, file=bsOut)
+fwrite(bisulphiteConversionDT, file=output$bisulphite_qc)
 
 
 # ---- 3. Determine which how many and which samples fail bisulphite conversion qc
-numPassed <- sum(bisulphiteConversionDT$conversion_rate > params$bisulphite_conversion_rate)
+conversion_minimum <- params$bisulphite_conversion_rate
+
+numPassed <- sum(bisulphiteConversionDT$conversion_rate > conversion_minimum)
 
 message(paste0(numPassed, ' out of ', nrow(bisulphiteConversionDT), 
                ' samples passed qc at bisulphite conversion rate of ', 
-               opt$conversion_rate, '%...\n'))
+               conversion_minimum, '%...\n'))
 
 message(paste0('The following samples failed at bisulphite conversion rate of ', 
-        opt$conversion_rate, '%:\n\t ', 
-        paste0(bisulphiteConversionDT[conversion_rate < params$bisulphite_conversion_rate]$sample, 
+        conversion_minimum, '%:\n\t ', 
+        paste0(bisulphiteConversionDT[conversion_rate < conversion_minimum]$sample, 
                collapse=',\n\t'), 
         '\n'))
 
 
 # ---- 4. Drop samples failing the bisulphite conversion cut-off
 message("Subsetting RGChannelSet to samples passing bisulphite QC...\n")
-keepSamples <- bisulphiteConversion > params$bisulphite_conversion_rate
+keepSamples <- bisulphiteConversion > coversion_minimum
 
 rgSetFiltered <- rgSet[, keepSamples]
 print(rgSetFiltered)

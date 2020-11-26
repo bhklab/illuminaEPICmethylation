@@ -13,7 +13,6 @@ input <- snakemake@input
 params <- snakemake@params
 output <- snakemake@output
 
-
 print(params)
 
 # ---- 1. Read in RGSet
@@ -52,8 +51,8 @@ for (i in seq_along(manual_qc_steps)) {
     print(rgSet)
     message("\n")
 
-    message(paste0('Saving RGChannelSet for ', manualQCStepNames[i], ' to: ', output[i], '...\n'))
-    qsave(rgSet, output[i])
+    message(paste0('Saving RGChannelSet for ', qc_step_names[i], ' to: ', output$file_names[i], '...\n'))
+    qsave(rgSet, output$file_names[i])
 }
 
 
