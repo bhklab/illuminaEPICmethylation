@@ -6,29 +6,14 @@ library(qs, quietly=TRUE)
 
 # ---- 0. Parse CLI arguments
 
-option_list <- list(
-    make_option(c('-p', '--plates'), 
-        help=c("A comma separated list of paths to the directory for each microarray plate."), 
-        type="character"),
-    make_option(c('-l', '--labels'), 
-        help=c("A comma separated list of paths to the labels for each plate, in the same order as '--plates'."), 
-        type="character"),
-    make_option(c('-o', '--output'), 
-        help='Path and filename to save the output to.', 
-        type='character'),
-    make_option(c('-n', '--nthread'), 
-        help=c("The number of threads to parallelize over."), 
-        type='integer', default=1)
-)
-
-opt <- parse_args(OptionParser(option_list=option_list))
-
+input <- snakemake@input
+output <- snakemake@output
 
 # ---- 1. Read in data
 message("Reading in plate data...\n")
 
 
-plateDirs <- unlist(strsplit(opt$plates, ' '))
+plateDirs <- unlist(strsplit(input$plates, ' '))
 arrays <- lapply(plateDirs, FUN=read.metharray.sheet)
 
 
@@ -37,7 +22,7 @@ message("Reading in plate labels...\n")
 
 
 ## FIXME:: Why is this making a list of lists?
-labelPaths <- unlist(strsplit(opt$labels, ' '))
+labelPaths <- unlist(strsplit(input$labels, ' '))
 
 labels <- lapply(labelPaths, read.csv)
 
@@ -99,6 +84,6 @@ finalRGSet <- Reduce(f=.combineArrays, finalRGSets)
 # ---- 6. Save the RGSet to disk
 message("Saving merged RGSet to disk...\n")
 
-qsave(finalRGSet, file=opt$output)
+qsave(finalRGSet, file=output)
 
 message("Done!\n\n")

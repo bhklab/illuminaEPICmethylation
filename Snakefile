@@ -27,8 +27,6 @@ nthread = config['nthread']
 
 analysis_name = config['analysis_name']
 
-detection_pvalue = config['detection_pvalue']
-
 bisulphite_conversion_rate = config['bisulphite_conversion_rate']
 
 
@@ -41,14 +39,8 @@ rule build_rgset_from_plate_data:
     output:
         f'procdata/1.{analysis_name}.RGChannelSet.qs'
     threads: nthread
-    shell:
-        """
-        Rscript scripts/1_buildRGsetFromPlateData.R \
-            -p '{input.plates}' \
-            -l '{input.labels}' \
-            -o '{output}' \
-            -n {nthread}
-        """
+    script:
+        "scripts/1_buildRGsetFromPlateData.R"
 
 
 # ---- 2. Filter out samples with less than 90% CpG probes detected
@@ -60,19 +52,15 @@ qc_step1 = qc_steps1[0]
 rule drop_samples_less_than_90pct_probes_detected:
     input:
         rgset=f'procdata/1.{analysis_name}.RGChannelSet.qs'
+    params:
+        detection_pvalue=config['detection_p_value']
     output:
         detectionPvalues=f'{qc_path1}.detection_pvalues.csv',
         probeQC=f'{qc_path1}.num_probes_with_proportion_failed_samples_p{detection_pvalue}.csv',
         sampleQC=f'{qc_path1}.probes_failed_per_sample_p{detection_pvalue}.csv',
         rgset_filtered=f'procdata/2.{analysis_name}.RGChannelSet.{qc_step1}.qs'
-    shell:
-        """
-        Rscript scripts/2_dropSamplesLessThan90PctProbesDetected.R \
-            -r {input.rgset} \
-            -p {detection_pvalue} \
-            -P {qc_path1} \
-            -o {output.rgset_filtered}
-        """
+    script:
+        "scripts/2_dropSamplesLessThan90PctProbesDetected.R"
 
 
 # ---- 3. Filter out samples with bisulphite conversion rate lower than specified in 'config.yml'
@@ -157,7 +145,7 @@ rule drop_probes_with_less_than_three_beads:
 preprocess_methods = config['preprocess_methods']
 
 # Split the input string
-preprocess_methods_split = preprocess_methods.split(',')
+preprocess_methods_split = preprocess_methods
 
 rule preprocess_to_methylset_and_qc:
     input:

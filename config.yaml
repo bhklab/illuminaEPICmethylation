@@ -2,21 +2,21 @@
 
 # Relative path to the data for each plate within the rawdata directory
 plate_data_dirs:
-    - 'Plate1'
-    - 'Plate2'
-    - 'Plate3'
+    - Plate1
+    - Plate2
+    - Plate3
 
 # Relative paths to the plate label .csv files inside of the metadata directory
 plate_labels:
-    - 'labels/plate1_labels.csv'
-    - 'labels/plate2_labels.csv'
-    - 'labels/plate3_labels.csv'
+    - labels/plate1_labels.csv
+    - labels/plate2_labels.csv
+    - labels/plate3_labels.csv
 
 # The maximum number of threads the pipeline can use
 nthread: 20
 
 # The name prepended to files to identify your current analysis
-analysis_name: 'van_de_rijn'
+analysis_name: van_de_rijn
 
 # Set the p-value cut-off for calling CpG probes as detected
 # We recommend leaving this as default unless you have a good justification
@@ -30,17 +30,27 @@ bisulphite_conversion_rate: 90
 #   then a comma separated list of wells for plate 1, then a colon, a comma separated list of wells
 #   for plate 2, etc.
 manual_qc_steps:
-    - 'logMU9:H3'
-    - 'noJurkat:B3,D5,F9,A1,C4,E8,G11;F3,E6,C8,A12,E4,D7,B11;B7;A1'
-    - 'noReplicates:B1,C8,F6;A6,E7,E11'
-    - 'DTFunique:E3,E4,E6,D7,B9,A10;E1,F2,G3,B4,F4,B5,A8,A9,D9,E9,C10,D10,H10,C11,H11,B12,D12,H12;G1,F4,G4,H4,A5,A7,E7,F7,A8,E8,B12'
+    logMU9: 
+        Plt-1: [H3]
+    noJurkat: 
+        Plt-1: [B3,D5,F9,A1,C4,E8,G11]
+        Plt2: [F3,E6,C8,A12,E4,D7,B11]
+        Plt3: [B7]
+        Plt4: [A1]
+    noReplicates:
+        Plt-1: [B1,C8,F6]
+        Plt2: [A6,E7,E11]
+    DTFunique:
+        Plt-1: [E3,E4,E6,D7,B9,A10]
+        Plt2: [E1,F2,G3,B4,F4,B5,A8,A9,D9,E9,C10,D10,H10,C11,H11,B12,D12,H12]
+        Plt3: [G1,F4,G4,H4,A5,A7,E7,F7,A8,E8,B12]
 
 # Which preprocessing methods to compare in rule 7
 # We recommend you leave this as is to get a good comparison of 
 #   how each normalization method performs on your data.
-preprocess_methods: 'Funnorm,Illumina,Noob,SWAN'
+preprocess_methods: [Funnorm, Illumina, Noob, SWAN]
 
-selected_preprocess_method: 'Illumina'
+selected_preprocess_method: Illumina
 
 # Same as previous manual QC steps, except on the preprocessed/normalized methylSet.
 # NOTE: The order of these steps matters! Please organize them from most to least important
@@ -60,9 +70,4 @@ selected_qc2_step: 'minAucRatio'
 
 # Regex columns based on these strings
 # NOTE: underscores get substituted to spaces inside the R script
-cancer_types:
-    - 'LMS'
-    - 'LM'
-    - 'GIST'
-    - 'DTF'
-    - 'DTF_het'
+cancer_types: [LMS, LM, GIST, DTF, 'DTF het']

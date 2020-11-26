@@ -10,28 +10,15 @@ suppressMessages({
     library(optparse, quietly=TRUE)
 })
 
-
 # ---- 0. Parse CLI arguments
-option_list <- list(
-    make_option(c('-r', '--rgset'), 
-        help="Path to the input RGChannelSet object.", 
-        type="character"),
-    make_option(c('-p', '--pvalue'),
-        help='P-value cut-off for calling probes as detected.',
-        type='numeric'),
-    make_option(c('-P', '--path'),
-        help='Path to save the output files to.',
-        type='character'),
-    make_option(c('-o', '--output'),
-        help='Path and filename to save the filtered RGChannelSet to.', 
-        type='character')
-)
 
-opt <- parse_args(OptionParser(option_list=option_list))
+input <- snakemake@input
+params <- snakemake@params
+output <- snakemake@output
 
 
 # ---- 1. Load RGChannelSet
-message("Reading in RGChannelSet from: ", opt$rgset, '...\n')
+message("Reading in RGChannelSet from: ", input$rgset, '...\n')
 rgSet <- qread(opt$rgset)
 
 
@@ -39,14 +26,14 @@ rgSet <- qread(opt$rgset)
 message("Calculating QC metrics...\n")
 source('scripts/functions/summarizeDetectionPvalueQC.R')
 
-detectionQCResults <- summarizeDetectionPvalueQC(rgSet, pValue=opt$pvalue)
+detectionQCResults <- summarizeDetectionPvalueQC(rgSet, pValue=params$detection_pvalue)
 
 
 # ---- 4. Construct result names and save QC results to disk
 
-detectionPOut <- paste0(opt$path, '.detection_pvalues.csv')
-sampleQCOut <- paste0(opt$path, '.probes_failed_per_sample_p', opt$pvalue, '.csv')
-probeQCOut <- paste0(opt$path, '.num_probes_with_proportion_failed_samples_p', opt$pvalue, '.csv')
+detectionPOut <- output$detectionPValues
+sampleQCOut <- output$sampleQC
+probeQCOut <- output$probeQC
 
 paths <- c(detectionPOut, sampleQCOut, probeQCOut)
 
