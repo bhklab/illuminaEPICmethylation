@@ -270,8 +270,8 @@ rule subset_grset_by_cancer_types:
         grsets=expand('results/13.{analysis_name}.{selected_preprocess_method}.{cancer_type}.GenomicRatioSet.qs', 
                       analysis_name=analysis_name, cancer_type=cancer_types, selected_preprocess_method=selected_preprocess_method)
     threads: nthread
-    shell:
-        'Rscript scripts/13_subsetSamplesByCancerType.R'
+    script:
+        'scripts/13_subsetSamplesByCancerType.R'
 
 
 cancer_types_all = ['all_types', *cancer_types] 
@@ -288,8 +288,8 @@ rule extract_m_and_beta_values:
         beta_values=expand('results/14.{analysis_name}.{selected_preprocess_method}.{cancer_type}.beta_values.csv',
                            analysis_name=analysis_name, cancer_type=cancer_types_all, selected_preprocess_method=selected_preprocess_method)
     threads: nthread
-    shell:
-        'Rscript scripts/14_extractCpGMandBetaValues.R'
+    script:
+        'scripts/14_extractCpGMandBetaValues.R'
 
 
 # --- 15. Collapse Adjacent CpG sites into methyalted regions for M and Beta values
@@ -303,8 +303,8 @@ rule collapse_grset_cpgs_to_methylated_regions:
         beta_region_grsets=expand('results/15.{analysis_name}.{selected_preprocess_method}.{cancer_type}.GenomicRatioSet.beta_values.regions.qs',
                                   analysis_name=analysis_name, cancer_type=cancer_types_all, selected_preprocess_method=selected_preprocess_method)
     threads: nthread
-    shell:
-        'Rscript scripts/15_collapseGRSetCpGsToMethylatedRegions.R'
+    script:
+        'scripts/15_collapseGRSetCpGsToMethylatedRegions.R'
 
 # ---- 16. Build methylated region to CpG mappings and write region M and Beta values to disk
 
@@ -322,5 +322,5 @@ rule build_region_mappings_for_beta_and_m_values:
         methyl_values=expand('results/16.{analysis_name}.{selected_preprocess_method}.{cancer_type}.{methylation_value}.regions.csv', 
                              analysis_name=analysis_name, cancer_type=cancer_types_all, methylation_value=methylation_values, selected_preprocess_method=selected_preprocess_method)
     threads: nthread
-    shell:
-        'Rscript scripts/16_buildRegionMappingsForBetaAndMValues.R'
+    script:
+        'scripts/16_buildRegionMappingsForBetaAndMValues.R'

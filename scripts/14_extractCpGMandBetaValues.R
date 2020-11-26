@@ -14,8 +14,8 @@ input <- snakemake@input
 output <- snakemake@output
 
 # ---- 1. Load in data
-message(paste0("Reading in GenomicRatioSets from: \n\t", paste0(opt$grsets, collapse='\n\t'), '\n'))
-grsets <- bplapply(opt$grsets, FUN=qread)
+message(paste0("Reading in GenomicRatioSets from: \n\t", paste0(input$grsets, collapse='\n\t'), '\n'))
+grsets <- bplapply(input$grsets, FUN=qread)
 
 # ---- 2. Extract all beta values
 message("Extracting Beta values...\n")
@@ -25,9 +25,9 @@ betaValueDTs <- lapply(betaValues, # object argument
                        keep.rownames='rownames')
 
 # ---- 3. Save beta values as .csv
-message(paste0("Saving Beta values to: \n\t", paste0(opt$beta_values, collapse='\n\t'), '\n'))
+message(paste0("Saving Beta values to: \n\t", paste0(output$beta_values, collapse='\n\t'), '\n'))
 for (i in seq_along(betaValueDTs)) {
-    fwrite(betaValueDTs[[i]], file=opt$beta_values[i])
+    fwrite(betaValueDTs[[i]], file=output$beta_values[i])
 }
 
 
@@ -40,9 +40,9 @@ mValueDTs <- lapply(mValues,  # object argument
 
 
 # ---- 5. Save m values as .csv
-message(paste0("Saving M values to: \n\t", paste0(opt$beta_values, collapse=',\n\t'), '\n'))
+message(paste0("Saving M values to: \n\t", paste0(output$m_values, collapse=',\n\t'), '\n'))
 for (i in seq_along(betaValueDTs)) {
-    fwrite(mValueDTs[[i]], file=opt$m_values[i])
+    fwrite(mValueDTs[[i]], file=output$m_values[i])
 }
 
 
