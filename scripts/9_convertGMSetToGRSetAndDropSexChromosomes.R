@@ -6,35 +6,23 @@ suppressMessages({
     library(minfi, quietly=TRUE)
     library(data.table, quietly=TRUE)
     library(qs, quietly=TRUE)
-    library(optparse, quietly=TRUE)
 })
 
-# ---- 0. Parse CLI arguments
-option_list <- list(
-    make_option(c('-i', '--input'), 
-        help='Path to normalized MethylSet.', 
-        type='character'),
-    make_option(c('-a', '--annotated'),
-        help='Path to write the annotated GenomicMethylSet to.',
-        type='character'),
-    make_option(c('-o', '--output'),
-        help='Path to write the GenomicRatioSet to.',
-        type='character')
-)
-
-opt <- parse_args(OptionParser(option_list=option_list))
+# ---- 0. Parse Snakemake arguments
+input <- snakemake@input
+output <- snakemake@output
 
 
 # ---- 1. Read in data
-message(paste0('Reading in MethylSet from: ', opt$input, '...\n'))
-methylSet <- qread(opt$input)
+message(paste0('Reading in MethylSet from: ', input$methylset, '...\n'))
+methylSet <- qread(input$methylset)
 
 
 # ---- 2. Annotate MethylSet to GenomicMethylSet and save 
-message(paste0('Annotating MethylSet and saving GenomicMethylSet to: ', opt$annotated, '...\n'))
+message(paste0('Annotating MethylSet and saving GenomicMethylSet to: ', output$genomicmethylset, '...\n'))
 
 gmSet <- mapToGenome(methylSet)
-qsave(gmSet, opt$annotated)
+qsave(gmSet, output$genomicmethylset)
 
 
 # ---- 3. Convert GMSet to GRSet
@@ -43,7 +31,7 @@ grSet <- ratioConvert(gmSet, what='both')
 
 
 # ---- 4. Drop sex chromosomes and save to GenomicMemthylSet
-message(paste0('Removing sex chromosomes from GenomicRatioSet and saving to: ', opt$output))
+message(paste0('Removing sex chromosomes from GenomicRatioSet and saving to: ', output$ratioset))
 
 grSet_annotations <- getAnnotation(grSet)
 keep <- !(grSet_annotations$chr %in% c('chrX', 'chrY'))
@@ -52,7 +40,7 @@ print(table(keep))
 
 grSet <- grSet[keep, ]
 
-qsave(grSet, opt$output)
+qsave(grSet, output$ratioset)
 
 
 message("Done!\n\n")

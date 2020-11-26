@@ -7,27 +7,16 @@ suppressMessages({
     library(data.table, quietly=TRUE)
     library(qs, quietly=TRUE)
     library(BiocParallel, quietly=TRUE)
-    library(optparse, quietly=TRUE)
 })
 
 # ---- 0. Parse CLI arguments
-
-option_list <- list(
-    make_option(c('-g', '--grset'), 
-        help=c("A comma separated list of paths to the directory for each microarray plate."),
-        type="character"),
-    make_option(c('-o', '--output'), 
-        help='Path and filename to save the output to.', 
-        type='character')
-)
-
-opt <- parse_args(OptionParser(option_list=option_list))
-
+input <- snakemake@input
+output <- snakemake@output
 
 # ---- 1. Load filtered GenomicRatioSet
-message(paste0("Loading filtered GenomicRatioSet from: ", opt$grset, '...\n'))
+message(paste0("Loading filtered GenomicRatioSet from: ", input$grset, '...\n'))
 
-grSet <- qread(opt$grset)
+grSet <- qread(input$grset)
 
 
 # ---- 2. Extract SNPs
@@ -54,9 +43,9 @@ grSetDropSNPs <- dropLociWithSnps(grSetSNPs, snps=c('SBE', 'CpG'), maf=0)
 
 
 # ---- 5. Writing SNP filtered GenomicRatioSet
-message(paste0("Writing SNP filtered GenomicRatioSet to: ", opt$output, '...\n'))
+message(paste0("Writing SNP filtered GenomicRatioSet to: ", output$drop_snps_grset, '...\n'))
 
-qsave(grSetDropSNPs, file=opt$output)
+qsave(grSetDropSNPs, file=output$drop_snps_grset)
 
 
 message("Done!\n\n")

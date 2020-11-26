@@ -9,26 +9,17 @@ suppressMessages({
     library(optparse, quietly=TRUE)
 })
 
-# ---- 0. Parse CLI arguments
-
-option_list <- list(
-    make_option(c('-g', '--grset'), 
-        help=c("A comma separated list of paths to the directory for each microarray plate."),
-        type="character"),
-    make_option(c('-o', '--output'), 
-        help='Path and filename to save the output to.', 
-        type='character')
-)
-
-opt <- parse_args(OptionParser(option_list=option_list))
-
+# ---- 0. Parse Snakemake arguments
+input <- snakemake@input
+output <- snakemake@output
 
 # ---- 1. Reading in GenomicRatioSet
-
-grSet <- qread(opt$grset)
+message("Reading in GenomcRatioSet from ", input$getset, '\n')
+grSet <- qread(input$grset)
 
 
 # ---- 2. Get list of EPIC cross-reactive probes
+message("Filtering cross-reactive probes")
 EPICxReactiveProbes <- maxprobes:::xreactive_probes()
 
 
@@ -39,6 +30,8 @@ print(table(keep))
 
 grSetNoXReactive <- grSet[keep, ]
 
-
+message("Saving cross-reactive probe filtered grSet to ", output$drop_xreactive_grset, '\n')
 # ---- 4. Save filtered GenomicRatioSet
-qsave(grSetNoXReactive, file=opt$output)
+qsave(grSetNoXReactive, file=output$drop_xreactive_grset)
+
+message("Done!\n\n")

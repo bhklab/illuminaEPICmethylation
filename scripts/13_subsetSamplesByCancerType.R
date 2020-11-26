@@ -10,30 +10,21 @@ suppressMessages({
     library(BiocParallel, quietly=TRUE)
 })
 
-# ---- 0. Parse CLI arguments
-option_list <- list(
-    make_option(c('-g', '--grset'), 
-        help=c("A comma separated list of paths to the directory for each microarray plate."),
-        type="character"),
-    make_option(c('-s', '--subsets'), 
-        help='Path and filename to save the output to.', 
-        type='character'),
-    make_option(c('-o', '--outputs'), 
-        help='Path and filename to save the output to.', 
-        type='character')
-)
-
-opt <- parse_args(OptionParser(option_list=option_list))
-
+# ---- 0. Parse Snakemake arguments
+input <- snakemake@input
+params <- snakemake@params
+output <- snakemake@output
 
 # ---- 1. Read in GenomicRatioSet
-grSet <- qread(opt$grset)
+message("Reading in GenomicRatioSet from ", input$grset, "\n")
+grSet <- qread(input$grset)
 
 
 # ---- 2. Match group names
+message("Performing subset by cancer type\n")
 
 # Parse string input into vector
-cancerTypes <- unlist(strsplit(opt$subsets, split=' '))
+cancerTypes <- unlist(strsplit(params$subsets, split=' '))
 cancerTypes <- lapply(cancerTypes, FUN=gsub, pattern='_', replacement=' ')
 
 

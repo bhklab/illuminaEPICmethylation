@@ -6,20 +6,19 @@ suppressMessages({
     library(minfi, quietly=TRUE)
     library(data.table, quietly=TRUE)
     library(qs, quietly=TRUE)
-    library(optparse, quietly=TRUE)
     library(wateRmelon, quietly=TRUE)
 })
 
 # ---- 0. Parse Snakemake arguments
-input <- snakefile@input
-params <- snakefile@params
-output <- snakefile@output
+input <- snakemake@input
+params <- snakemake@params
+output <- snakemake@output
 
 
 # ---- 1. Read in rgSet
 message(paste0('Reading input file from ', input$rgset, '...\n'))
 
-rgSet <- qread(opt$rgset)
+rgSet <- qread(input$rgset)
 
 
 methods <- params$preprocess_methods

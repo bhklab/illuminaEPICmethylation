@@ -7,30 +7,18 @@ suppressMessages({
     library(data.table, quietly=TRUE)
     library(qs, quietly=TRUE)
     library(matrixStats, quietly=TRUE)
-    library(optparse, quietly=TRUE)
 })
 
 # ---- 0. Parse CLI arguments
-option_list <- list(
-    make_option(c('-g', '--grset'), 
-        help='Path to GenomicRatioSet.', 
-        type='character'),
-    make_option(c('-p', '--pvalues'), 
-        help='Path to QC3 detection p-value .csv file.', 
-        type='character'),
-    make_option(c('-o', '--output'),
-        help='Path to write the filtered GenomicRatioSet to.',
-        type='character')
-)
-
-opt <- parse_args(OptionParser(option_list=option_list))
+input <- snakemake@input
+output <- snakemake@output
 
 
 # ---- 1. Load data
-message(paste0('Loading RGSet from: ', opt$grset, '...\n'))
+message(paste0('Loading RGSet from: ', input$grset, '...\n'))
 
-grSet <- qread(opt$grset)
-pValues <- fread(opt$pvalues)
+grSet <- qread(input$grset)
+pValues <- fread(input$pvalues)
 
 # --- 2 . Filter poor quality probes
 message(paste0('Filtering probes failing...\n'))
@@ -46,9 +34,9 @@ grSet <- grSet[keep, ]
 
 
 # ---- 3. Save filtered RGSet
-message(paste0('\nSaving GenomicRatioSet to: ', opt$output, '...\n'))
+message(paste0('\nSaving GenomicRatioSet to: ', output$filtered_grset, '...\n'))
 
-qsave(grSet, opt$output)
+qsave(grSet, output$filtered_grset)
 
 
 message("Done...\n\n")

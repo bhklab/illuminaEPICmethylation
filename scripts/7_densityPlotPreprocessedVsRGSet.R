@@ -16,8 +16,6 @@ suppressMessages({
 
 # ---- 0. Parse Snakemake arguments
 
-print(snakemake)
-
 input <- snakemake@input
 params <- snakemake@params
 output <- snakemake@output
@@ -31,7 +29,7 @@ qcReportPath <- output$qc_report
 message("Reading in data from:\n\t", 
         paste0(input$rgset, '\n\t', paste0(methylSetPaths, collapse='\n\t'), '\n'))
 
-methylSets <- bplapply(methylSetPaths, qread, nthreads=floor(nthread/length(methylSetPaths)))
+methylSets <- bplapply(methylSetPaths, qread, nthreads=floor(nthreads/length(methylSetPaths)))
 rgSet <- qread(input$rgset, nthreads=nthreads)
 
 plotSets <- c(list(rgSet), methylSets)
