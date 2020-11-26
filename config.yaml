@@ -51,24 +51,30 @@ manual_qc_steps:
 #   how each normalization method performs on your data.
 preprocess_methods: [Funnorm, Illumina, Noob, SWAN]
 
+# Based on the results of rule 7, which normalization method is optimal?
 selected_preprocess_method: Illumina
 
-# Same as previous manual QC steps, except on the preprocessed/normalized methylSet.
-# NOTE: The order of these steps matters! Please organize them from most to least important
-# qc steps.
+# Similar to manual_qc_steps, except this time filter is done on the three
+#   qc metrics computed in rule 7. Again these are applied iteratively, thus
+#   the order of the steps matters.
 manual_qc2_steps:
     minAucRatio: 1.0
-    maxNumPeaks: 3
+    maxNumPeaks: 2
     minPeakDiff: 0.5
 
-# Are there any samples which should be excluded from the criteria in manual_qc2_steps
+# Are there any sample you wish to include despite failing one of manual_qc2_steps
+#   This can be expecially useful for samples where there are more than 2 peaks
+#   detected, but visual inspection of the qc plot shows two clearly defined peaks.
 manual_qc2_exceptions:
-    - ''
+    Plt-1: [B12]
+    Plt2: [D1, D4, C5, F10]
+    Plt3: [E10, A11]
+    Plt4: [A2]
 
 # Which QC step to include. NOTE: This will include all steps before this one in the
 #   manual_qc2_steps list.
-selected_qc2_step: 'minAucRatio'
+selected_qc2_step: minPeakDiff
 
-# Regex columns based on these strings
-# NOTE: underscores get substituted to spaces inside the R script
+# If there are multiple types of cancer samples, this step allows you to
+#   partition the final results based on the _ column of `colData()`
 cancer_types: [LMS, LM, GIST, DTF, 'DTF het']

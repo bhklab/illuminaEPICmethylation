@@ -10,7 +10,7 @@ packages loaded in R scripts used in the pipeline.
 In the future, we may consider parameterizing libraries to allow this
 pipeline to support the full range of potential `minfi` inputs, but for
 the time being users will need to manually change the library calls in
-the R scripts.
+the provided R scripts.
 
 ## Snakemake
 
@@ -124,23 +124,23 @@ in the `qc` directory. Step 3 filters out probes with a bisulphite conversion ra
 lower than what is specified in `config.yaml`.
 
 At this point you should have a look at the the QC metrics generated in the previous step
-and decide which, if any, samples you wish to filter out. There may also be sample you
-wish to remove for other reasons, such as techincal replicates or qc wells.
+and decide which, if any, samples you wish to filter out. There may also be samples you
+wish to remove for other reasons, such as techincal replicates or wells spiked for qc.
 
 To do this you will use specify one or more rounds of sample removal to the `manual_qc_steps`
-parameter in `config.yaml`. Each step should be specified as a string where anything before
-a colon is the step name, which is used to label the output file. After the colon, plates
-are separated by a semi-colon and samples by a comma. Please note that the plates names are
-lexically sorted when filtering, so if your plate names don't lexically sort into their
-natural numeric order, please fix the names.
-
-For example, to remove sample wells H3 and D5 from plate 1 and G11 from plate 3 would be specified as: 'qcStepName:H3,D5;;G11'. Each item in the `manual_qc_steps` list is executed iteratively,
-and saved to a file with all previous qc steps names appended to it. This is to allow selection
-of different manual QC levels for different analyses in downstream analysis.
+parameter in `config.yaml`. Please see the documentation provided in that file.
 
 ### Manual QC and Preprocessing
 
+Once you have setup your manual qc steps, we recommend running the command:
 
+`snakemake --cores 2 density_plot_preprocessed_vs_rgset`
+
+This will execute rules 4 through 7. This rule generates two qc files. 
+The first is a `.pdf` file showing the beta-value distribution for each sample under each of the normalization methods specified to the `preprocess_methods` parameter in `config.yaml`. It is a good idea to have a look at these files to determine the correct parameter cut-offs for the second round of manual qc. You can also identify samples which technically fail one of the three qc metrics computed, but still have a good distribution on visual inspection of the plot.
 
 
 ### Final QC and Cancer Type Separation
+
+
+

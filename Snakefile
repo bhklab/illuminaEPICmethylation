@@ -139,26 +139,20 @@ rule drop_probes_with_less_than_three_beads:
 # Read in relevant configuration
 preprocess_methods = config['preprocess_methods']
 
-# Split the input string
-preprocess_methods_split = preprocess_methods
-
 rule preprocess_to_methylset_and_qc:
     input:
         rgset=f'procdata/5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
+    params:
+        preprocess_methods=preprocess_methods
     output:
         methylsets=expand('procdata/6.{analysis_name}.MethylSet.{preprocess_method}.qs',
-            analysis_name=analysis_name, preprocess_method=preprocess_methods_split),
+            analysis_name=analysis_name, preprocess_method=preprocess_methods),
         qc_reports=expand('qc/6.{analysis_name}.MethylSet.{preprocess_method}.qc_report.csv',
-            analysis_name=analysis_name, preprocess_method=preprocess_methods_split)
+            analysis_name=analysis_name, preprocess_method=preprocess_methods)
     threads: nthread
-    shell:
-        """
-        Rscript scripts/6_preprocessToMethylSetAndQC.R \
-            -i {input.rgset} \
-            -m '{preprocess_methods_split}' \
-            -o '{output.methylsets}' \
-            -r '{output.qc_reports}'
-        """
+    script:
+        'scripts/6_preprocessToMethylSetAndQC.R'
+
 
 
 # ---- 7. Visual the Raw RGSet vs Each Preprocessing Method with QC Metrics
