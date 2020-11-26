@@ -5,7 +5,6 @@ message('Loading script dependencies...\n')
 suppressMessages({
     library(minfi, quietly=TRUE)
     library(qs, quietly=TRUE)
-    library(optparse, quietly=TRUE)
     library(BiocParallel, quietly=TRUE)
     library(data.table, quietly=TRUE)
     library(ggplot2, quietly=TRUE)
@@ -13,39 +12,21 @@ suppressMessages({
     library(grid, quietly=TRUE)
 })
 
-# ---- 0. Parse CLI arguments
-message('Parsing command line arguments...\n')
+# ---- 0. Parse Snakemake arguments
 
-option_list <- list(
-    make_option(c('-m', '--methylsets'), 
-        help=c("Path the the preprocessed MethylSet object "), 
-        type="character"),
-    make_option(c('-r', '--rgset'), 
-        help=c("Path to the RGSets from the previous two QC steps"), 
-        type='character'),
-    make_option(c('-o', '--output'), 
-        help='Path to write the pdf of density plots for each MethylSet.',
-        type='character'),
-    make_option(c('-q', '--qc'),
-        help='Path to write the qc statistics data.table to.',
-        type='character'),
-    make_option(c('-t', '--titles'),
-        help='Title on plots for each methylSet included in -m.',
-        type='character')
-)
+input <- snakemake@input
+output <- snakemake@output
 
-opt <- parse_args(OptionParser(option_list=option_list))
-
-methylSetPaths <- unlist(strsplit(opt$methylsets, split=' '))
-plotTitles <- c('Unprocessed', unlist(strsplit(opt$titles, split=',')))
-qcReportPath <- opt$qc
+methylSetPaths <- input$methylsets
+plotTitles <- c('Unprocessed', input$plot_titles)
+qcReportPath <- output$qc
 
 # ---- 1. Read in methylSet
 message("Reading in data from:\n\t", 
-        paste0(opt$rgset, '\n\t', paste0(methylSetPaths, collapse='\n\t'), '\n'))
+        paste0(input$rgset, '\n\t', paste0(methylSetPaths, collapse='\n\t'), '\n'))
 
 methylSets <- bplapply(methylSetPaths, qread, nthreads=4)
-rgSet <- qread(opt$rgset, nthreads=20)
+rgSet <- qread(input$rgset, nthreads=20)
 
 plotSets <- c(list(rgSet), methylSets)
 rm(methylSets); rm(rgSet); gc()
@@ -154,7 +135,7 @@ rm(betaMatrixList); gc()
 betaDTList <- lapply(betaDTList, FUN=.renameColumnsMakeNames)
 
 # ----- 5. Rendering Plots and Writing to PDF 
-message(paste0("Writing plots to:\n\t", opt$output, '\n'))
+message(paste0("Writing plots to:\n\t", output$plots, '\n'))
 
 .ggplotDensity <- function(DT, sampleName, plotTitle) {
     ggplotGrob(
@@ -185,7 +166,7 @@ pdfGrobs <- lapply(sampleNames,
                      plotTitles=plotTitles,
                      statsDT=statsDT)
 
-pdf(opt$output, height=11, width=8.5)
+pdf(output$plots, height=11, width=8.5)
 
 for (sampleIdx in seq_along(sampleNames)) {
     message(paste0('Writing ', sampleNames[sampleIdx], ' to pdf...'))

@@ -160,19 +160,14 @@ rule density_plot_preprocessed_vs_rgset:
         methylsets=expand('procdata/6.{analysis_name}.MethylSet.{preprocess_method}.qs',
             analysis_name=analysis_name, preprocess_method=preprocess_methods),
         rgset=f'procdata/5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
+    params:
+        plot_titles=preprocess_methods
     output:
         plots=f'qc/7.{analysis_name}.{comparisons}.density_plots.pdf',
         qc_report=f'qc/7.{analysis_name}.{comparisons}.stats_table.csv'
     threads: nthread
-    shell:
-        """
-        Rscript scripts/7_densityPlotPreprocessedVsRGSet.R \
-            -m '{input.methylsets}' \
-            -r {input.rgset} \
-            -o '{output.plots}' \
-            -q '{output.qc_report}' \
-            -t '{preprocess_methods}'
-        """
+    script:
+        'scripts/7_densityPlotPreprocessedVsRGSet.R'
 
 
 # ---- 8. Filter out one or more manual QC steps after prepreprocessing
