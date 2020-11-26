@@ -37,7 +37,6 @@ rgSetFiltered <- pfilter(mn=rgSet, un=rgSet,
 print(rgSetFiltered)
 
 message(paste0("Saving filtered RGChannelSet to: ", output$rgset_filtered, '...\n'))
-qsave(rgSetFiltered, file=out$rgset_filtered)
-
+qsave(rgSetFiltered, file=output$rgset_filtered)
 
 message("Done!\n\n")

@@ -176,7 +176,7 @@ rule density_plot_preprocessed_vs_rgset:
 selected_preprocess_method = config['selected_preprocess_method']
 manual_qc2_steps = list(config['manual_qc2_steps'].keys())
 
-# Build outpuit file names for iteratively strict qc steps
+# Build output file names for iteratively filtering steps
 manual_qc2_file_name = f'procdata/8.{analysis_name}.MethylSet.{selected_preprocess_method}'
 manual_qc2_output_file_names = []
 qc2_steps = []
@@ -215,13 +215,8 @@ rule convert_gmset_to_grset_and_drop_sex_chromosomes:
         genomicmethylset=f'procdata/9.{analysis_name}.{selected_preprocess_method}.GenomicMethylSet.qs',
         ratioset=f'procdata/9.{analysis_name}.{selected_preprocess_method}.GenomicRatioSet.drop_sex_chr.qs'
     threads: nthread
-    shell:
-        """
-        Rscript scripts/9_convertGMSetToGRSetAndDropSexChromosomes.R \
-            -i {input.methylset} \
-            -a {output.genomicmethylset} \
-            -o {output.ratioset}
-        """
+    script:
+        'scripts/9_convertGMSetToGRSetAndDropSexChromosomes.R'
 
 
 # ---- 10. Filter poor quality probes
@@ -232,13 +227,8 @@ rule filter_grset_poor_quality_probes:
     output:
         filtered_grset=f'procdata/10.{analysis_name}.{selected_preprocess_method}.GenomicRatioSet.drop_sex_chr.filter_probes.qs'
     threads: nthread
-    shell:
-        """
-        Rscript scripts/10_filterGRSetPoorQualityProbes.R \
-            -g {input.grset} \
-            -p {input.pvalues} \
-            -o {output.filtered_grset}
-        """
+    script:
+        'scripts/10_filterGRSetPoorQualityProbes.R'
 
 
 # ---- 11. SNP correction
@@ -249,12 +239,8 @@ rule correct_grset_for_snps:
     output:
         drop_snps_grset=f'procdata/11.{analysis_name}.{selected_preprocess_method}.GenomicRatioSet.drop_sex_chr.filter_probes.drop_snps.qs'
     threads: nthread
-    shell:
-        """
-        Rscript scripts/11_correctGRSetForSNPs.R \
-            -g {input.grset} \
-            -o {output.drop_snps_grset}
-        """
+    script:
+        'scripts/11_correctGRSetForSNPs.R'
 
 
 # ---- 12. Correct for cross-reactive probes
@@ -265,12 +251,8 @@ rule correct_grset_for_crossreactive_probes:
     output:
         drop_xreactive_grset=f'procdata/12.{analysis_name}.{selected_preprocess_method}.GenomicRatioSet.drop_sex_chr.filter_probes.drop_snps.correct_xreactive.qs'
     threads: nthread
-    shell:
-        """
-        Rscript scripts/12_correctGRSetForCrossReactiveProbes.R \
-            -g {input.grset} \
-            -o {output.drop_xreactive_grset}
-        """
+    script:
+        'scripts/12_correctGRSetForCrossReactiveProbes.R'
 
 ## TODO:: Iteratively build the file labels so there aren't so many parameters being passed to input/output
 
@@ -281,18 +263,15 @@ cancer_types = config['cancer_types']
 rule subset_grset_by_cancer_types:
     input:
         grset=f'procdata/12.{analysis_name}.{selected_preprocess_method}.GenomicRatioSet.drop_sex_chr.filter_probes.drop_snps.correct_xreactive.qs'
+    params:
+        cancer_types=cancer_types 
     output:
         grset=f'results/13.{analysis_name}.{selected_preprocess_method}.all_types.GenomicRatioSet.qs',
         grsets=expand('results/13.{analysis_name}.{selected_preprocess_method}.{cancer_type}.GenomicRatioSet.qs', 
                       analysis_name=analysis_name, cancer_type=cancer_types, selected_preprocess_method=selected_preprocess_method)
     threads: nthread
     shell:
-        """
-        Rscript scripts/13_subsetSamplesByCancerType.R \
-            -g {input.grset} \
-            -s '{cancer_types}' \
-            -o '{output.grset} {output.grsets}'
-        """
+        'Rscript scripts/13_subsetSamplesByCancerType.R'
 
 
 cancer_types_all = ['all_types', *cancer_types] 
@@ -310,12 +289,7 @@ rule extract_m_and_beta_values:
                            analysis_name=analysis_name, cancer_type=cancer_types_all, selected_preprocess_method=selected_preprocess_method)
     threads: nthread
     shell:
-        """
-        Rscript scripts/14_extractCpGMandBetaValues.R \
-            -g '{input.grsets}' \
-            -b '{output.beta_values}' \
-            -m '{output.m_values}'
-        """
+        'Rscript scripts/14_extractCpGMandBetaValues.R'
 
 
 # --- 15. Collapse Adjacent CpG sites into methyalted regions for M and Beta values
@@ -330,12 +304,7 @@ rule collapse_grset_cpgs_to_methylated_regions:
                                   analysis_name=analysis_name, cancer_type=cancer_types_all, selected_preprocess_method=selected_preprocess_method)
     threads: nthread
     shell:
-        """
-        Rscript scripts/15_collapseGRSetCpGsToMethylatedRegions.R \
-            -g '{input.grsets}' \
-            -b '{output.beta_region_grsets}' \
-            -m '{output.m_region_grsets}'
-        """
+        'Rscript scripts/15_collapseGRSetCpGsToMethylatedRegions.R'
 
 # ---- 16. Build methylated region to CpG mappings and write region M and Beta values to disk
 
@@ -354,10 +323,4 @@ rule build_region_mappings_for_beta_and_m_values:
                              analysis_name=analysis_name, cancer_type=cancer_types_all, methylation_value=methylation_values, selected_preprocess_method=selected_preprocess_method)
     threads: nthread
     shell:
-        """
-        Rscript scripts/16_buildRegionMappingsForBetaAndMValues.R \
-            -g '{input.grsets}' \
-            -d '{input.methylation_data}' \
-            -M '{output.mappings}' \
-            -V '{output.methyl_values}'
-        """
+        'Rscript scripts/16_buildRegionMappingsForBetaAndMValues.R'
