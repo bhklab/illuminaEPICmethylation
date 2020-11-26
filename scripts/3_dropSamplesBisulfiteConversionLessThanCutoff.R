@@ -53,7 +53,7 @@ message(paste0('The following samples failed at bisulphite conversion rate of ',
 
 # ---- 4. Drop samples failing the bisulphite conversion cut-off
 message("Subsetting RGChannelSet to samples passing bisulphite QC...\n")
-keepSamples <- bisulphiteConversion > coversion_minimum
+keepSamples <- bisulphiteConversion > conversion_minimum
 
 rgSetFiltered <- rgSet[, keepSamples]
 print(rgSetFiltered)
