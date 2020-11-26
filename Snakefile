@@ -125,13 +125,8 @@ rule drop_probes_with_less_than_three_beads:
     output:
         bead_counts=f'qc/5.{analysis_name}.RGChannelSet.{manual_qc_current_step}.bead_counts.csv',
         rgset_filtered=f'procdata/5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
-    shell:
-        """
-        Rscript scripts/5_dropProbesWithLessThan3Beads.R \
-            -r {input.rgset} \
-            -b {output.bead_counts} \
-            -o {output.rgset_filtered}
-        """
+    script:
+        'scripts/5_dropProbesWithLessThan3Beads.R'
 
 
 # ---- 6. Preprocess RGChannelSet to MethylSet
@@ -157,13 +152,13 @@ rule preprocess_to_methylset_and_qc:
 
 # ---- 7. Visual the Raw RGSet vs Each Preprocessing Method with QC Metrics
 
-preprocess_string = '_vs_'.join(preprocess_methods_split)
+preprocess_string = '_vs_'.join(preprocess_methods)
 comparisons = f'rgSet_vs_{preprocess_string}'
 
 rule density_plot_preprocessed_vs_rgset:
     input:
         methylsets=expand('procdata/6.{analysis_name}.MethylSet.{preprocess_method}.qs',
-            analysis_name=analysis_name, preprocess_method=preprocess_methods_split),
+            analysis_name=analysis_name, preprocess_method=preprocess_methods),
         rgset=f'procdata/5.{analysis_name}.RGChannelSet.{final_qc_step}.qs'
     output:
         plots=f'qc/7.{analysis_name}.{comparisons}.density_plots.pdf',
