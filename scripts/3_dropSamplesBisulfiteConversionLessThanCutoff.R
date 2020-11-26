@@ -7,13 +7,11 @@ suppressMessages({
     library(IlluminaHumanMethylationEPICmanifest, quietly=TRUE)
     library(data.table, quietly=TRUE)
     library(qs, quietly=TRUE)
-    library(optparse, quietly=TRUE)
     library(wateRmelon, quietly=TRUE)
 })
 
 
 # ---- 0. Parse Snakemake arguments
-
 input <- snakemake@input
 params <- snakemake@params
 output <- snakemake@output
