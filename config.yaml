@@ -15,13 +15,15 @@ plate_labels:
 # The maximum number of threads the pipeline can use
 nthread: 20
 
-# The name prepended to files to identify you analysis
+# The name prepended to files to identify your current analysis
 analysis_name: 'van_de_rijn'
 
 # Set the p-value cut-off for calling CpG probes as detected
+# We recommend leaving this as default unless you have a good justification
 detection_pvalue: 0.05
 
 # Set the minimum bisulphite conversion rate for a sample to pass QC
+# We recommend lieaving this as default unless you have a good justification
 bisulphite_conversion_rate: 90
 
 # Specify iterative steps of manual QC, where the step name is first followed by a colon, 
