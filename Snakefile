@@ -27,6 +27,8 @@ nthread = config['nthread']
 
 analysis_name = config['analysis_name']
 
+detection_pvalue = config['detection_pvalue']
+
 bisulphite_conversion_rate = config['bisulphite_conversion_rate']
 
 
@@ -53,7 +55,7 @@ rule drop_samples_less_than_90pct_probes_detected:
     input:
         rgset=f'procdata/1.{analysis_name}.RGChannelSet.qs'
     params:
-        detection_pvalue=config['detection_p_value']
+        detection_pvalue=detection_pvalue
     output:
         detectionPvalues=f'{qc_path1}.detection_pvalues.csv',
         probeQC=f'{qc_path1}.num_probes_with_proportion_failed_samples_p{detection_pvalue}.csv',

@@ -1,13 +1,21 @@
-library(minfi, quietly=TRUE)
-library(optparse, quietly=TRUE)
-library(BiocParallel, quietly=TRUE)
-library(qs, quietly=TRUE)
+# ---- 0. Load dependencies
+message("Loading script dependencies...\n")
 
+# Suppress package load messages to ensure logs are not cluttered
+suppressMessages({
+    library(minfi, quietly=TRUE)
+    library(optparse, quietly=TRUE)
+    library(BiocParallel, quietly=TRUE)
+    library(qs, quietly=TRUE)
+})
 
 # ---- 0. Parse CLI arguments
 
 input <- snakemake@input
 output <- snakemake@output
+
+cat(input)
+cat(output)
 
 # ---- 1. Read in data
 message("Reading in plate data...\n")
@@ -84,6 +92,6 @@ finalRGSet <- Reduce(f=.combineArrays, finalRGSets)
 # ---- 6. Save the RGSet to disk
 message("Saving merged RGSet to disk...\n")
 
-qsave(finalRGSet, file=output)
+qsave(finalRGSet, file=output[[1]])
 
 message("Done!\n\n")
