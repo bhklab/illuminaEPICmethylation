@@ -11,7 +11,7 @@ suppressMessages({
 
 # ---- 0. Parse CLI arguments
 input <- snakemake@input
-output <- snamekmake@output
+output <- snakemake@output
 
 # ---- 1. Read in grsets
 message(paste0("Reading in GenomicRatioSets from: \n\t", paste0(input$grsets, collapse=',\n\t'), '\n'))

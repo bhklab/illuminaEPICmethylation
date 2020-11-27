@@ -260,6 +260,8 @@ rule correct_grset_for_crossreactive_probes:
 # ---- 13. Subset grSet by cancer type
 
 cancer_types = config['cancer_types']
+# Remove whitespace
+cancer_types_files = [re.sub(' ', '_', cancer) for cancer in cancer_types]
 
 rule subset_grset_by_cancer_types:
     input:
@@ -269,13 +271,13 @@ rule subset_grset_by_cancer_types:
     output:
         grset=f'results/13.{analysis_name}.{selected_preprocess_method}.all_types.GenomicRatioSet.qs',
         grsets=expand('results/13.{analysis_name}.{selected_preprocess_method}.{cancer_type}.GenomicRatioSet.qs', 
-                      analysis_name=analysis_name, cancer_type=cancer_types, selected_preprocess_method=selected_preprocess_method)
+                      analysis_name=analysis_name, cancer_type=cancer_types_files, selected_preprocess_method=selected_preprocess_method)
     threads: nthread
     script:
         'scripts/13_subsetSamplesByCancerType.R'
 
 
-cancer_types_all = ['all_types', *cancer_types] 
+cancer_types_all = ['all_types', *cancer_types_files] 
 
 # ---- 14. Extract M and Beta values from each GenomicRatioSet for CpGs
 

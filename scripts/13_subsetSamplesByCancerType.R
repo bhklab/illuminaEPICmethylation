@@ -6,7 +6,6 @@ suppressMessages({
     library(minfi, quietly=TRUE)
     library(data.table, quietly=TRUE)
     library(qs, quietly=TRUE)
-    library(optparse, quietly=TRUE)
     library(BiocParallel, quietly=TRUE)
 })
 
@@ -24,9 +23,7 @@ grSet <- qread(input$grset)
 message("Performing subset by cancer type\n")
 
 # Parse string input into vector
-cancerTypes <- unlist(strsplit(params$subsets, split=' '))
-cancerTypes <- lapply(cancerTypes, FUN=gsub, pattern='_', replacement=' ')
-
+cancerTypes <- params$cancer_types
 
 subsets <- lapply(cancerTypes,  # pattern
                   FUN=grepl,
@@ -42,9 +39,8 @@ grSets <- bplapply(subsets,
 
 # ---- 4. Save subsets to disk
 message('Saving GenomicRatioSet subsets...\n')
-outputs <- unlist(strsplit(opt$outputs, split=' '))
-combinedGRSet <- outputs[1]
-outputs <- outputs[-1]
+outputs <- output$grsets
+combinedGRSet <- output$grset
 
 qsave(grSet, file=combinedGRSet)
 

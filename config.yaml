@@ -71,9 +71,8 @@ manual_qc2_exceptions:
     Plt3: [E10, A11]
     Plt4: [A2]
 
-# Which QC step to include. NOTE: This will include all steps before this one in the
-#   manual_qc2_steps list.
-selected_qc2_step: minPeakDiff
+# Which QC step to include. They are interative, so you need to concatente them with .
+selected_qc2_step: minAucRatio.maxNumPeaks.minPeakDiff
 
 # If there are multiple types of cancer samples, this step allows you to
 #   partition the final results based on the _ column of `colData()`

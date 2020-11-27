@@ -53,16 +53,16 @@ mappings <- bpmapply(FUN=.mapFeaturesToRegions,
 mappingDTs <- lapply(mappings, FUN=data.table)                     
 
 message(paste0("Writing methylated region mappings to:\n\t",
-        paste0(output$mappings_out, collapse='\n\t'), '\n'))
+        paste0(output$mappings, collapse='\n\t'), '\n'))
 
 for (i in seq_along(mappingDTs)) {
-    fwrite(mappingDTs[[i]], output$mappings_out[i])
+    fwrite(mappingDTs[[i]], output$mappings[i])
 }
 
 
 # ---- 5. Separate M and Beta value GRSets
 message("Extracting M and Beta values from the GRSets...\n")
-isBeta <- vapply(output$methylation_out, 
+isBeta <- vapply(output$methyl_values, 
                  FUN=grepl, pattern='.*beta_values.*', 
                  FUN.VALUE=logical(1))
 
@@ -87,8 +87,8 @@ mValueDTs <- bplapply(mValues,
 
 
 message(paste("Writing m and beta value data.tables to .csv: ", 
-        paste0(output$methylation_out, collapse='\n\t'), '\n'))
+        paste0(output$methyl_values, collapse='\n\t'), '\n'))
 for (i in seq_along(betaValueDTs)) {
-    fwrite(betaValueDTs[[i]], file=output$methylation_out[isBeta][i])
-    fwrite(mValueDTs[[i]], file=output$methylation_out[!isBeta][i])
+    fwrite(betaValueDTs[[i]], file=output$methyl_values[isBeta][i])
+    fwrite(mValueDTs[[i]], file=output$methyl_values[!isBeta][i])
 }
