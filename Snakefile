@@ -194,7 +194,8 @@ rule drop_samples_failed_manual_qc2:
         qc_report=f'qc/7.{analysis_name}.{comparisons}.stats_table.csv'
     params:
         preproc_method=selected_preprocess_method,
-        qc_criteria=config['manual_qc2_steps']
+        qc_criteria=config['manual_qc2_steps'],
+        exceptions=config['manual_qc2_exceptions']
     output:
         manual_qc2_output_file_names
     threads: nthread
