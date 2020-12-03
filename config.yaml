@@ -51,7 +51,7 @@ manual_qc_steps:
 #   how each normalization method performs on your data.
 preprocess_methods: [Funnorm, Illumina, Noob, SWAN]
 
-# Based on the results of rule 7, which normalization method is optimal?
+# Based on the results of rule 7, which preprocessing method is optimal?
 selected_preprocess_method: Illumina
 
 # Similar to manual_qc_steps, except this time filter is done on the three

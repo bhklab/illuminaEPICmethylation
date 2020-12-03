@@ -23,8 +23,6 @@ rgSet <- qread(input$rgset)
 # ---- 2. Subset out failed samples
 message('Removing failed samples...\n')
 
-colData <- data.table(as.data.frame(colData(rgSet)))
-
 .getPlateWellIndexes <- function(plate, wells, colData) {
     return(colData[Sample_Plate == plate & Sample_Well %in% wells, which=TRUE])
 }
@@ -33,6 +31,9 @@ manual_qc_steps <- params$manual_qc_steps
 qc_step_names <- names(manual_qc_steps)
 
 for (i in seq_along(manual_qc_steps)) {
+
+    colData <- data.table(as.data.frame(colData(rgSet)))
+
     message(paste0('Failed samples for manual qc step: ', qc_step_names[i], '...\n'))
     print(manual_qc_steps[[i]])
     plateNames <- names(manual_qc_steps[[i]])

@@ -40,7 +40,7 @@ for (i in seq_along(params$qc_criteria)) {
     exception_samples <- c()
     for (j in seq_along(exceptions)) {
         exception_samples <- c(exception_samples, 
-            colData[Sample_Plate == names(exceptions)[j] & Sample_Well %in% exceptions[j], ]$rn)
+            colData[Sample_Plate == names(exceptions)[j] & Sample_Well %in% exceptions[[j]], ]$rn)
     }
     keepSamples <- c(keepSamples, make.names(exception_samples))
     message('Dropping samples:\n', paste0(setdiff(make.names(colnames(methylSet)), keepSamples), collapse='\n\t'), '\n')
